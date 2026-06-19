@@ -412,7 +412,7 @@
 </main>
 
 <footer>
-  <p>Daten via <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> · gebaut von Noah</p>
+  <p>Spiele &amp; Form via <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> · Tabelle via <a href="https://www.openligadb.de" target="_blank" rel="noopener">OpenLigaDB</a> · gebaut von Noah</p>
 </footer>
 
 <script>
@@ -420,9 +420,12 @@
   "use strict";
 
   // ---- Config ----
-  const API_KEY = "123"; // public free test key, fine for personal/low-traffic projects
+  const API_KEY = "123"; // TheSportsDB public test key — used für Spiel/Form/Resultate
   const BASE = `https://www.thesportsdb.com/api/v1/json/${API_KEY}`;
   const TEAM_NAME_CANDIDATES = ["FC Zurich", "FC Zürich", "Zurich"];
+  // OpenLigaDB: kostenlos, ohne Key, CORS-fähig — liefert die VOLLE 12er-Tabelle.
+  const OPENLIGA = "https://api.openligadb.de";
+  const SSL_SHORTCUT = "ssl"; // Swiss Super League
 
   // ---- State ----
   let fczTeamId = null;
@@ -437,6 +440,18 @@
     const m = now.getMonth() + 1;
     // Swiss Super League runs roughly July -> May
     return m >= 7 ? `${y}-${y+1}` : `${y-1}-${y}`;
+  }
+
+  // Saison-Startjahr für OpenLigaDB (z.B. 2025 für die Saison 2025/26)
+  function seasonStartYear(){
+    const now = new Date();
+    const y = now.getFullYear();
+    return (now.getMonth() + 1) >= 7 ? y : y - 1;
+  }
+
+  function isFczName(name){
+    // "FC Zürich" matchen, aber NICHT "Grasshopper Club Zürich"
+    return /\bfc\s*z(ü|ue|u)rich\b/i.test(name || "");
   }
 
   async function fetchJson(url){
@@ -568,35 +583,79 @@
   }
 
   // ---- Step 4: league table ----
-  function renderTable(rows, fczId){
+  // Liefert die volle Tabelle von OpenLigaDB; fällt bei Fehler auf die
+  // (gedeckelte) TheSportsDB-Tabelle zurück. Gibt normalisierte Zeilen zurück.
+  async function fetchTable(){
+    // 1) OpenLigaDB — volle 12er-Tabelle, kostenlos, ohne Key
+    try{
+      const data = await fetchJson(`${OPENLIGA}/getbltable/${SSL_SHORTCUT}/${seasonStartYear()}`);
+      if (Array.isArray(data) && data.length){
+        const sorted = [...data].sort((a,b) =>
+          (b.points - a.points) ||
+          ((b.goals - b.opponentGoals) - (a.goals - a.opponentGoals)) ||
+          (b.goals - a.goals)
+        );
+        return sorted.map((t, i) => ({
+          rank: i + 1,
+          team: t.teamName,
+          played: t.matches,
+          win: t.won, draw: t.draw, loss: t.lost,
+          gd: t.goals - t.opponentGoals,
+          points: t.points,
+          isFcz: isFczName(t.teamName)
+        }));
+      }
+    } catch(e){ /* fällt unten auf TheSportsDB zurück */ }
+
+    // 2) Fallback: TheSportsDB (Free-Key, oft nur Top 5)
+    if (fczLeagueId){
+      try{
+        const td = await fetchJson(`${BASE}/lookuptable.php?l=${fczLeagueId}&s=${currentSeason()}`);
+        const rows = td && td.table;
+        if (rows && rows.length){
+          return rows.map(r => ({
+            rank: +r.intRank,
+            team: r.strTeam,
+            played: +r.intPlayed,
+            win: +r.intWin, draw: +r.intDraw, loss: +r.intLoss,
+            gd: +r.intGoalDifference,
+            points: +r.intPoints,
+            isFcz: r.idTeam === fczTeamId
+          }));
+        }
+      } catch(e){ /* ignore */ }
+    }
+    return null;
+  }
+
+  function renderTable(rows){
     const wrapEl = document.getElementById("tableWrap");
     const eyebrowEl = document.getElementById("tableEyebrow");
     const noteEl = document.getElementById("tableNote");
     if (!rows || !rows.length){
       eyebrowEl.textContent = "Tabelle";
       noteEl.hidden = true;
-      wrapEl.innerHTML = `<p class="empty-state" style="padding:16px;">Tabelle aktuell nicht verfügbar (Free-API-Limit). Einfach später nochmal versuchen.</p>`;
+      wrapEl.innerHTML = `<p class="empty-state" style="padding:16px;">Tabelle aktuell nicht verfügbar. Einfach später nochmal versuchen.</p>`;
       return;
     }
-    // Der kostenlose API-Key deckelt die Tabelle auf wenige Plätze (typisch Top 5).
     const full = rows.length >= 10;
     eyebrowEl.textContent = full ? "Tabelle" : `Tabelle (Top ${rows.length})`;
     if (full){
       noteEl.hidden = true;
     } else {
-      noteEl.innerHTML = `Die kostenlose TheSportsDB-API liefert nur die ersten ${rows.length} Plätze. Die komplette Super-League-Tabelle gibt's <a href="https://www.google.com/search?q=Super+League+Tabelle" target="_blank" rel="noopener">hier</a>.`;
+      noteEl.innerHTML = `Nur die ersten ${rows.length} Plätze verfügbar. Die komplette Super-League-Tabelle gibt's <a href="https://www.google.com/search?q=Super+League+Tabelle" target="_blank" rel="noopener">hier</a>.`;
       noteEl.hidden = false;
     }
     const body = rows.map(r => `
-      <tr class="${r.idTeam === fczId ? "fcz-row" : ""}">
-        <td>${r.intRank}</td>
-        <td class="team-name">${r.strTeam}</td>
-        <td>${r.intPlayed}</td>
-        <td>${r.intWin}</td>
-        <td>${r.intDraw}</td>
-        <td>${r.intLoss}</td>
-        <td>${r.intGoalDifference}</td>
-        <td>${r.intPoints}</td>
+      <tr class="${r.isFcz ? "fcz-row" : ""}">
+        <td>${r.rank}</td>
+        <td class="team-name">${r.team}</td>
+        <td>${r.played}</td>
+        <td>${r.win}</td>
+        <td>${r.draw}</td>
+        <td>${r.loss}</td>
+        <td>${r.gd > 0 ? "+" + r.gd : r.gd}</td>
+        <td>${r.points}</td>
       </tr>`).join("");
     wrapEl.innerHTML = `
       <table>
@@ -644,16 +703,7 @@
       renderForm(lastEvents);
       renderResults(lastEvents);
 
-      if (fczLeagueId){
-        try{
-          const tableData = await fetchJson(`${BASE}/lookuptable.php?l=${fczLeagueId}&s=${currentSeason()}`);
-          renderTable(tableData && tableData.table, fczTeamId);
-        } catch(e){
-          renderTable(null, fczTeamId);
-        }
-      } else {
-        renderTable(null, fczTeamId);
-      }
+      renderTable(await fetchTable());
 
     } catch(err){
       console.error(err);

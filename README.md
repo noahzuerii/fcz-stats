@@ -29,28 +29,24 @@ Alles in **einer einzigen `index.html`** — kein Backend, kein Build, kein Fram
 
 ## 🛠️ Tech
 
-- **Vanilla HTML/CSS/JS** in einer Datei, ~540 Zeilen
-- Daten live im Browser von der kostenlosen [TheSportsDB](https://www.thesportsdb.com) API (öffentlicher Test-Key `123`)
+- **Vanilla HTML/CSS/JS** in einer Datei, kein Build, kein Framework
+- Zwei kostenlose APIs, beide direkt im Browser (kein Backend, kein Key-Geheimnis):
+  - **Tabelle:** [OpenLigaDB](https://www.openligadb.de) — komplette 12er-Tabelle, ohne Key, CORS-fähig
+  - **Spiel / Form / Resultate:** [TheSportsDB](https://www.thesportsdb.com) (öffentlicher Test-Key `123`)
 - Fonts: Big Shoulders Display · Inter · Space Mono (Google Fonts)
 - Respektiert `prefers-reduced-motion`; robuste Empty-States statt Crashes
 
 ## ⚙️ Wie es funktioniert
 
-1. Beim Laden sucht das Script per `searchteams.php` automatisch nach „FC Zurich" und merkt sich `idTeam` + `idLeague` — **keine IDs sind hardcoded**.
-2. Mit der Team-ID: `eventsnext.php` (nächstes Spiel) und `eventslast.php` (letzte 5 Spiele).
-3. Mit der Liga-ID: `lookuptable.php` für die aktuelle Saison (automatisch aus dem Datum berechnet, Juli–Mai-Logik der Super League).
+1. Beim Laden sucht das Script per `searchteams.php` automatisch nach „FC Zurich" und merkt sich `idTeam` — **keine IDs sind hardcoded**.
+2. Mit der Team-ID: `eventsnext.php` (nächstes Spiel) und `eventslast.php` (letzte Spiele) von TheSportsDB.
+3. Die **Tabelle** kommt von OpenLigaDB (`getbltable/ssl/<jahr>`) — volle 12 Teams; Saison-Jahr wird automatisch aus dem Datum berechnet (Juli–Mai-Logik). Schlägt das fehl, gibt's einen Fallback auf TheSportsDB.
 4. Der Countdown läuft client-seitig per `setInterval` auf Basis des Match-Timestamps.
 
-> Der Test-Key `123` hat ein Rate-Limit, und manche Endpoints können leer zurückkommen — dafür gibt es überall einen Empty-State.
+### ⚠️ Datenquellen-Hinweise
 
-### ⚠️ Bekannte Limits des kostenlosen Keys
-
-Der öffentliche Test-Key `123` **deckelt jeden Endpoint auf wenige Datensätze** (gilt für alle Ligen, nicht nur die Super League):
-
-- **Tabelle:** nur die ersten ~5 Plätze statt aller 12 Teams → die Sektion ist ehrlich als „Top 5" beschriftet, mit Link zur kompletten Tabelle.
-- **Form / Resultate:** oft nur 1–2 vergangene Spiele statt der letzten 5.
-
-Die vollständige Tabelle und echte 5-Spiele-Form gibt es nur mit einem **Premium-Key** von TheSportsDB. Dann müsste lediglich `API_KEY` in [`index.html`](index.html) ersetzt werden — die Logik bleibt gleich.
+- **Tabelle:** vollständig (alle 12 Teams) dank OpenLigaDB — Daten sind community-gepflegt und können dem realen Spielstand mal etwas hinterherhinken.
+- **Form / Resultate:** Der TheSportsDB-Test-Key `123` deckelt vergangene Spiele auf wenige Datensätze (oft nur 1–2 statt 5). Die UI beschriftet das ehrlich. Echte 5-Spiele-Form gäbe es mit einem TheSportsDB-**Premium-Key** — dann nur `API_KEY` in [`index.html`](index.html) ersetzen.
 
 ## 🚀 Deployment
 
