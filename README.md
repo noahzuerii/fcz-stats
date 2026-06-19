@@ -20,7 +20,6 @@
 |---|---|
 | 🗓️ **Nächstes Spiel** | Heim/Auswärts-Matchup mit Ort und Anstosszeit |
 | ⏱️ **Live-Countdown** | Tage / Std / Min / Sek bis zum Anpfiff, läuft im Browser |
-| 🔵 **Form** | Die letzten 5 Spiele als W/U/N-Pills mit Resultat im Tooltip |
 | 📋 **Resultate** | Liste der jüngsten Spiele mit Endstand |
 | 🏆 **Tabelle** | Aktuelle Super-League-Tabelle, FCZ-Zeile hervorgehoben |
 | 🛡️ **Wappen** | FCZ-Badge wird live aus der API geladen |
@@ -32,7 +31,7 @@ Alles in **einer einzigen `index.html`** — kein Backend, kein Build, kein Fram
 - **Vanilla HTML/CSS/JS** in einer Datei, kein Build, kein Framework
 - Zwei kostenlose APIs, beide direkt im Browser (kein Backend, kein Key-Geheimnis):
   - **Tabelle:** [Wikipedia](https://de.wikipedia.org) (de) — komplette **und korrekte** 12er-Tabelle, ohne Key, CORS-fähig via `origin=*`
-  - **Spiel / Form / Resultate:** [TheSportsDB](https://www.thesportsdb.com) (öffentlicher Test-Key `123`)
+  - **Nächstes Spiel / Resultate:** [TheSportsDB](https://www.thesportsdb.com) (öffentlicher Test-Key `123`)
 - Fonts: Big Shoulders Display · Inter · Space Mono (Google Fonts)
 - Respektiert `prefers-reduced-motion`; robuste Empty-States statt Crashes
 
@@ -46,7 +45,7 @@ Alles in **einer einzigen `index.html`** — kein Backend, kein Build, kein Fram
 ### ⚠️ Datenquellen-Hinweise
 
 - **Tabelle:** vollständig (alle 12 Teams) **und korrekt** dank Wikipedia. Wikipedia-Inhalte stehen unter CC BY-SA; während einer laufenden Saison kann die Tabelle minimal verzögert aktualisiert werden (Editoren pflegen i.d.R. innerhalb von Stunden nach).
-- **Form / Resultate:** Der TheSportsDB-Test-Key `123` deckelt vergangene Spiele auf wenige Datensätze (oft nur 1–2 statt 5). Die UI beschriftet das ehrlich. Echte 5-Spiele-Form gäbe es mit einem TheSportsDB-**Premium-Key** — dann nur `API_KEY` in [`index.html`](index.html) ersetzen.
+- **Resultate:** Der TheSportsDB-Test-Key `123` deckelt vergangene Spiele auf wenige Datensätze (oft nur 1–2). Mehr gäbe es mit einem TheSportsDB-**Premium-Key** — dann nur `API_KEY` in [`index.html`](index.html) ersetzen.
 
 ## 🚀 Deployment
 

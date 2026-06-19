@@ -76,9 +76,8 @@
   }
   header.topbar{ animation-delay: 0s; }
   #heroSection{ animation-delay: 0.05s; }
-  #formSection{ animation-delay: 0.12s; }
-  #resultsSection{ animation-delay: 0.19s; }
-  #tableSection{ animation-delay: 0.26s; }
+  #resultsSection{ animation-delay: 0.14s; }
+  #tableSection{ animation-delay: 0.22s; }
 
   header.topbar{
     position: relative;
@@ -254,27 +253,6 @@
   .note a{ color: var(--blue); text-decoration: none; font-style: normal; }
   .note a:hover{ color: var(--blue-bright); text-decoration: underline; }
 
-  /* FORM PILLS */
-  .form-pills{ display:flex; gap: 9px; }
-  .pill{
-    width: 38px; height: 38px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Space Mono', monospace;
-    font-weight: 700;
-    font-size: 14px;
-    color: #0a1826;
-    box-shadow: 0 4px 12px -4px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.25);
-    cursor: default;
-    transition: transform 0.15s;
-  }
-  .pill:hover{ transform: translateY(-3px) scale(1.06); }
-  .pill.W{ background: linear-gradient(180deg, #6fc07b, var(--win)); }
-  .pill.D{ background: linear-gradient(180deg, #e6c45c, var(--draw)); }
-  .pill.L{ background: linear-gradient(180deg, #e26461, var(--loss)); }
-
   /* RESULTS LIST */
   .result-list{
     list-style: none;
@@ -390,12 +368,6 @@
       <div class="clock-unit"><span id="cd-s">--</span><label>Sek</label></div>
     </div>
     <p class="venue" id="venue"></p>
-  </section>
-
-  <section id="formSection">
-    <p class="eyebrow" id="formEyebrow">Form</p>
-    <div class="form-pills" id="formPills"><span class="empty-state">Lädt …</span></div>
-    <p class="note" id="formNote" hidden></p>
   </section>
 
   <section id="resultsSection">
@@ -574,39 +546,7 @@
     startCountdown(timestamp);
   }
 
-  // ---- Step 3: last results + form ----
-  function renderForm(events){
-    const formEl = document.getElementById("formPills");
-    const eyebrowEl = document.getElementById("formEyebrow");
-    const noteEl = document.getElementById("formNote");
-    if (!events || !events.length){
-      eyebrowEl.textContent = "Form";
-      noteEl.hidden = true;
-      setEmpty(formEl, "Noch keine Resultate.");
-      return;
-    }
-    const sorted = [...events].sort((a,b) => new Date(a.dateEvent) - new Date(b.dateEvent));
-    eyebrowEl.textContent = sorted.length === 1
-      ? "Form (letztes Spiel)"
-      : `Form (letzte ${sorted.length} Spiele)`;
-    // Der kostenlose API-Key liefert nur begrenzt vergangene Spiele zurück.
-    if (sorted.length < 5){
-      noteEl.textContent = "Die kostenlose TheSportsDB-API gibt nur wenige vergangene Spiele zurück — daher ggf. weniger als 5.";
-      noteEl.hidden = false;
-    } else {
-      noteEl.hidden = true;
-    }
-    formEl.innerHTML = sorted.map(ev => {
-      const isHome = /zur/i.test(ev.strHomeTeam);
-      const fczGoals = isHome ? +ev.intHomeScore : +ev.intAwayScore;
-      const oppGoals = isHome ? +ev.intAwayScore : +ev.intHomeScore;
-      let outcome = "D";
-      if (fczGoals > oppGoals) outcome = "W";
-      if (fczGoals < oppGoals) outcome = "L";
-      return `<span class="pill ${outcome}" title="${ev.strHomeTeam} ${ev.intHomeScore}:${ev.intAwayScore} ${ev.strAwayTeam}">${outcome}</span>`;
-    }).join("");
-  }
-
+  // ---- Step 3: last results ----
   function renderResults(events){
     const listEl = document.getElementById("resultList");
     if (!events || !events.length){
@@ -731,7 +671,6 @@
       const lastEvents = lastData ? (lastData.results || lastData.events) : null;
 
       renderNextMatch(nextEvent);
-      renderForm(lastEvents);
       renderResults(lastEvents);
 
       renderTable(await fetchTable());
