@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FCZ Matchday — Live Dashboard</title>
+<meta name="description" content="Live-Dashboard für FC Zürich: nächstes Spiel, Form, Resultate und Tabelle.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0b1b2b;
+    --bg-elevated: #122a44;
+    --bg-elevated-2: #16314f;
+    --blue: #6cace4;
+    --blue-dim: #2f5878;
+    --amber: #f2c14e;
+    --white: #f5f7fa;
+    --muted: #8fa3bd;
+    --win: #5fae6b;
+    --draw: #d9b44a;
+    --loss: #d9534f;
+    --radius: 14px;
+  }
+
+  *{ box-sizing: border-box; }
+  html, body{ margin:0; padding:0; }
+
+  body{
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* ambient floodlight glow, decorative only */
+  .stadium-glow{
+    position: fixed;
+    top: -30vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 140vw;
+    height: 70vh;
+    background: radial-gradient(ellipse at center, rgba(108,172,228,0.18) 0%, rgba(108,172,228,0.05) 40%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header.topbar{
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .brand{ display:flex; align-items:baseline; gap:10px; }
+  .brand-mark{
+    font-family: 'Big Shoulders Display', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    letter-spacing: 1px;
+    color: var(--blue);
+  }
+  .brand-sub{
+    font-size: 13px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  .refresh-btn{
+    background: var(--bg-elevated);
+    border: 1px solid var(--blue-dim);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .refresh-btn:hover{ background: var(--bg-elevated-2); border-color: var(--blue); }
+  .refresh-btn:focus-visible{ outline: 2px solid var(--amber); outline-offset: 2px; }
+  .refresh-btn[disabled]{ opacity: 0.5; cursor: default; }
+
+  main{
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 24px 60px;
+  }
+
+  .eyebrow{
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 14px;
+  }
+
+  section{ margin-top: 36px; }
+
+  /* HERO / SCOREBOARD */
+  .hero{
+    background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-elevated-2) 100%);
+    border: 1px solid var(--blue-dim);
+    border-radius: var(--radius);
+    padding: 28px 24px 24px;
+    text-align: center;
+  }
+
+  .matchup{
+    font-family: 'Big Shoulders Display', sans-serif;
+    font-weight: 800;
+    font-size: clamp(28px, 7vw, 42px);
+    line-height: 1.1;
+    letter-spacing: 0.5px;
+    margin: 4px 0 22px;
+  }
+  .matchup .vs{
+    color: var(--muted);
+    font-size: 0.55em;
+    margin: 0 10px;
+    font-weight: 600;
+  }
+  .matchup .fcz{ color: var(--blue); }
+
+  .countdown{
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin: 0 0 18px;
+  }
+  .clock-unit{
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--blue-dim);
+    border-radius: 10px;
+    padding: 10px 4px;
+    min-width: 64px;
+  }
+  .clock-unit span{
+    display: block;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: 26px;
+    color: var(--amber);
+    font-variant-numeric: tabular-nums;
+  }
+  .clock-unit label{
+    display: block;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .venue{
+    color: var(--muted);
+    font-size: 14px;
+    margin: 0;
+  }
+
+  .empty-state{
+    color: var(--muted);
+    font-size: 14px;
+    padding: 6px 0;
+  }
+
+  /* FORM PILLS */
+  .form-pills{ display:flex; gap: 8px; }
+  .pill{
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--bg);
+  }
+  .pill.W{ background: var(--win); }
+  .pill.D{ background: var(--draw); }
+  .pill.L{ background: var(--loss); }
+
+  /* RESULTS LIST */
+  .result-list{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .result-list li{
+    background: var(--bg-elevated);
+    border: 1px solid var(--blue-dim);
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+    gap: 12px;
+  }
+  .result-list .res-teams{ flex: 1; }
+  .result-list .res-score{
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    color: var(--amber);
+    font-size: 16px;
+  }
+  .result-list .res-date{
+    color: var(--muted);
+    font-size: 12px;
+    min-width: 64px;
+    text-align: right;
+  }
+
+  /* TABLE */
+  .table-wrap{ overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--blue-dim); }
+  table{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background: var(--bg-elevated);
+  }
+  th, td{
+    padding: 10px 8px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  th{
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--blue-dim);
+  }
+  td.team-name{ text-align: left; font-weight: 600; }
+  tr.fcz-row{ background: rgba(108,172,228,0.16); }
+  tr.fcz-row td{ color: var(--white); font-weight: 700; }
+  tr:not(:last-child) td{ border-bottom: 1px solid rgba(47,88,120,0.4); }
+
+  footer{
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 20px 24px 40px;
+  }
+  footer a{ color: var(--blue); text-decoration: none; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stadium-glow" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">FCZ</span>
+    <span class="brand-sub">Super League Tracker</span>
+  </div>
+  <button class="refresh-btn" id="refreshBtn">Aktualisieren</button>
+</header>
+
+<main>
+
+  <section class="hero" id="heroSection">
+    <p class="eyebrow">Nächstes Spiel</p>
+    <div class="matchup" id="matchup">Lädt …</div>
+    <div class="countdown" id="countdown" hidden>
+      <div class="clock-unit"><span id="cd-d">--</span><label>Tage</label></div>
+      <div class="clock-unit"><span id="cd-h">--</span><label>Std</label></div>
+      <div class="clock-unit"><span id="cd-m">--</span><label>Min</label></div>
+      <div class="clock-unit"><span id="cd-s">--</span><label>Sek</label></div>
+    </div>
+    <p class="venue" id="venue"></p>
+  </section>
+
+  <section id="formSection">
+    <p class="eyebrow">Form (letzte 5 Spiele)</p>
+    <div class="form-pills" id="formPills"><span class="empty-state">Lädt …</span></div>
+  </section>
+
+  <section id="resultsSection">
+    <p class="eyebrow">Letzte Resultate</p>
+    <ul class="result-list" id="resultList"><li class="empty-state">Lädt …</li></ul>
+  </section>
+
+  <section id="tableSection">
+    <p class="eyebrow">Tabelle</p>
+    <div class="table-wrap" id="tableWrap"><p class="empty-state" style="padding:16px;">Lädt …</p></div>
+  </section>
+
+</main>
+
+<footer>
+  <p>Daten via <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> · gebaut von Noah</p>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---- Config ----
+  const API_KEY = "123"; // public free test key, fine for personal/low-traffic projects
+  const BASE = `https://www.thesportsdb.com/api/v1/json/${API_KEY}`;
+  const TEAM_NAME_CANDIDATES = ["FC Zurich", "FC Zürich", "Zurich"];
+
+  // ---- State ----
+  let fczTeamId = null;
+  let fczLeagueId = null;
+  let nextMatchTimestamp = null;
+  let countdownTimer = null;
+
+  // ---- Helpers ----
+  function currentSeason(){
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth() + 1;
+    // Swiss Super League runs roughly July -> May
+    return m >= 7 ? `${y}-${y+1}` : `${y-1}-${y}`;
+  }
+
+  async function fetchJson(url){
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  }
+
+  function setEmpty(el, message){
+    el.innerHTML = `<span class="empty-state">${message}</span>`;
+  }
+
+  // ---- Step 1: find FCZ team + league id ----
+  async function findFczTeam(){
+    for (const name of TEAM_NAME_CANDIDATES){
+      try{
+        const data = await fetchJson(`${BASE}/searchteams.php?t=${encodeURIComponent(name)}`);
+        const teams = data && data.teams;
+        if (teams && teams.length){
+          const team = teams.find(t => /zur/i.test(t.strTeam)) || teams[0];
+          return team;
+        }
+      } catch(e){ /* try next candidate */ }
+    }
+    return null;
+  }
+
+  // ---- Step 2: next match + countdown ----
+  function startCountdown(timestamp){
+    nextMatchTimestamp = new Date(timestamp);
+    const countdownEl = document.getElementById("countdown");
+    countdownEl.hidden = false;
+
+    function tick(){
+      const diff = nextMatchTimestamp - new Date();
+      if (diff <= 0){
+        clearInterval(countdownTimer);
+        document.getElementById("cd-d").textContent = "0";
+        document.getElementById("cd-h").textContent = "0";
+        document.getElementById("cd-m").textContent = "0";
+        document.getElementById("cd-s").textContent = "0";
+        return;
+      }
+      const s = Math.floor(diff / 1000);
+      document.getElementById("cd-d").textContent = Math.floor(s / 86400);
+      document.getElementById("cd-h").textContent = Math.floor((s % 86400) / 3600);
+      document.getElementById("cd-m").textContent = Math.floor((s % 3600) / 60);
+      document.getElementById("cd-s").textContent = s % 60;
+    }
+    tick();
+    countdownTimer = setInterval(tick, 1000);
+  }
+
+  function renderNextMatch(event){
+    const matchupEl = document.getElementById("matchup");
+    const venueEl = document.getElementById("venue");
+
+    if (!event){
+      setEmpty(matchupEl.parentElement, "Keine kommenden Spiele geplant. Schau später nochmal vorbei.");
+      matchupEl.remove();
+      document.getElementById("countdown").hidden = true;
+      return;
+    }
+
+    const home = event.strHomeTeam;
+    const away = event.strAwayTeam;
+    const isHome = /zur/i.test(home);
+
+    matchupEl.innerHTML = isHome
+      ? `<span class="fcz">${home}</span><span class="vs">vs</span>${away}`
+      : `${home}<span class="vs">@</span><span class="fcz">${away}</span>`;
+
+    const dateStr = new Date(event.strTimestamp || `${event.dateEvent}T${event.strTime || "00:00:00"}`)
+      .toLocaleString("de-CH", { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+    venueEl.textContent = `${dateStr} · ${event.strVenue || "Ort folgt"}`;
+
+    const timestamp = event.strTimestamp || `${event.dateEvent}T${event.strTime || "00:00:00"}`;
+    startCountdown(timestamp);
+  }
+
+  // ---- Step 3: last results + form ----
+  function renderForm(events){
+    const formEl = document.getElementById("formPills");
+    if (!events || !events.length){
+      setEmpty(formEl, "Noch keine Resultate.");
+      return;
+    }
+    const sorted = [...events].sort((a,b) => new Date(a.dateEvent) - new Date(b.dateEvent));
+    formEl.innerHTML = sorted.map(ev => {
+      const isHome = /zur/i.test(ev.strHomeTeam);
+      const fczGoals = isHome ? +ev.intHomeScore : +ev.intAwayScore;
+      const oppGoals = isHome ? +ev.intAwayScore : +ev.intHomeScore;
+      let outcome = "D";
+      if (fczGoals > oppGoals) outcome = "W";
+      if (fczGoals < oppGoals) outcome = "L";
+      return `<span class="pill ${outcome}" title="${ev.strHomeTeam} ${ev.intHomeScore}:${ev.intAwayScore} ${ev.strAwayTeam}">${outcome}</span>`;
+    }).join("");
+  }
+
+  function renderResults(events){
+    const listEl = document.getElementById("resultList");
+    if (!events || !events.length){
+      listEl.innerHTML = `<li class="empty-state">Noch keine Resultate verfügbar.</li>`;
+      return;
+    }
+    const sorted = [...events].sort((a,b) => new Date(b.dateEvent) - new Date(a.dateEvent));
+    listEl.innerHTML = sorted.map(ev => {
+      const date = new Date(ev.dateEvent).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit" });
+      return `<li>
+        <span class="res-teams">${ev.strHomeTeam} – ${ev.strAwayTeam}</span>
+        <span class="res-score">${ev.intHomeScore} : ${ev.intAwayScore}</span>
+        <span class="res-date">${date}</span>
+      </li>`;
+    }).join("");
+  }
+
+  // ---- Step 4: league table ----
+  function renderTable(rows, fczId){
+    const wrapEl = document.getElementById("tableWrap");
+    if (!rows || !rows.length){
+      wrapEl.innerHTML = `<p class="empty-state" style="padding:16px;">Tabelle aktuell nicht verfügbar (Free-API-Limit). Einfach später nochmal versuchen.</p>`;
+      return;
+    }
+    const body = rows.map(r => `
+      <tr class="${r.idTeam === fczId ? "fcz-row" : ""}">
+        <td>${r.intRank}</td>
+        <td class="team-name">${r.strTeam}</td>
+        <td>${r.intPlayed}</td>
+        <td>${r.intWin}</td>
+        <td>${r.intDraw}</td>
+        <td>${r.intLoss}</td>
+        <td>${r.intGoalDifference}</td>
+        <td>${r.intPoints}</td>
+      </tr>`).join("");
+    wrapEl.innerHTML = `
+      <table>
+        <thead><tr>
+          <th>#</th><th style="text-align:left;">Team</th><th>Sp</th><th>S</th><th>U</th><th>N</th><th>+/-</th><th>Pkt</th>
+        </tr></thead>
+        <tbody>${body}</tbody>
+      </table>`;
+  }
+
+  // ---- Orchestration ----
+  async function loadAll(){
+    const refreshBtn = document.getElementById("refreshBtn");
+    refreshBtn.disabled = true;
+    refreshBtn.textContent = "Lädt …";
+    if (countdownTimer) clearInterval(countdownTimer);
+
+    try{
+      if (!fczTeamId){
+        const team = await findFczTeam();
+        if (!team){
+          setEmpty(document.getElementById("heroSection"), "FC Zürich konnte über die API nicht gefunden werden.");
+          return;
+        }
+        fczTeamId = team.idTeam;
+        fczLeagueId = team.idLeague;
+      }
+
+      const [nextData, lastData] = await Promise.all([
+        fetchJson(`${BASE}/eventsnext.php?id=${fczTeamId}`).catch(() => null),
+        fetchJson(`${BASE}/eventslast.php?id=${fczTeamId}`).catch(() => null)
+      ]);
+
+      const nextEvent = nextData && nextData.events ? nextData.events[0] : null;
+      const lastEvents = lastData ? (lastData.results || lastData.events) : null;
+
+      renderNextMatch(nextEvent);
+      renderForm(lastEvents);
+      renderResults(lastEvents);
+
+      if (fczLeagueId){
+        try{
+          const tableData = await fetchJson(`${BASE}/lookuptable.php?l=${fczLeagueId}&s=${currentSeason()}`);
+          renderTable(tableData && tableData.table, fczTeamId);
+        } catch(e){
+          renderTable(null, fczTeamId);
+        }
+      } else {
+        renderTable(null, fczTeamId);
+      }
+
+    } catch(err){
+      console.error(err);
+      setEmpty(document.getElementById("heroSection"), "Daten konnten nicht geladen werden. Später nochmal versuchen.");
+    } finally{
+      refreshBtn.disabled = false;
+      refreshBtn.textContent = "Aktualisieren";
+    }
+  }
+
+  document.getElementById("refreshBtn").addEventListener("click", loadAll);
+  loadAll();
+})();
+</script>
+</body>
+</html>
