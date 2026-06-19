@@ -31,7 +31,7 @@ Alles in **einer einzigen `index.html`** — kein Backend, kein Build, kein Fram
 
 - **Vanilla HTML/CSS/JS** in einer Datei, kein Build, kein Framework
 - Zwei kostenlose APIs, beide direkt im Browser (kein Backend, kein Key-Geheimnis):
-  - **Tabelle:** [OpenLigaDB](https://www.openligadb.de) — komplette 12er-Tabelle, ohne Key, CORS-fähig
+  - **Tabelle:** [Wikipedia](https://de.wikipedia.org) (de) — komplette **und korrekte** 12er-Tabelle, ohne Key, CORS-fähig via `origin=*`
   - **Spiel / Form / Resultate:** [TheSportsDB](https://www.thesportsdb.com) (öffentlicher Test-Key `123`)
 - Fonts: Big Shoulders Display · Inter · Space Mono (Google Fonts)
 - Respektiert `prefers-reduced-motion`; robuste Empty-States statt Crashes
@@ -40,12 +40,12 @@ Alles in **einer einzigen `index.html`** — kein Backend, kein Build, kein Fram
 
 1. Beim Laden sucht das Script per `searchteams.php` automatisch nach „FC Zurich" und merkt sich `idTeam` — **keine IDs sind hardcoded**.
 2. Mit der Team-ID: `eventsnext.php` (nächstes Spiel) und `eventslast.php` (letzte Spiele) von TheSportsDB.
-3. Die **Tabelle** kommt von OpenLigaDB (`getbltable/ssl/<jahr>`) — volle 12 Teams; Saison-Jahr wird automatisch aus dem Datum berechnet (Juli–Mai-Logik). Schlägt das fehl, gibt's einen Fallback auf TheSportsDB.
+3. Die **Tabelle** kommt aus dem Wikipedia-Artikel „Super League JJJJ/JJ (Schweiz)" (`action=parse`, `origin=*` für CORS). Das Script parst die `{{Fußballtabelle/Zeile|…}}`-Vorlagen und nimmt die finale/aktuelle 12er-Gesamttabelle. Saison-Jahr wird automatisch aus dem Datum berechnet. Schlägt das fehl, gibt's einen Fallback auf die (gedeckelte) TheSportsDB-Tabelle.
 4. Der Countdown läuft client-seitig per `setInterval` auf Basis des Match-Timestamps.
 
 ### ⚠️ Datenquellen-Hinweise
 
-- **Tabelle:** vollständig (alle 12 Teams) dank OpenLigaDB — Daten sind community-gepflegt und können dem realen Spielstand mal etwas hinterherhinken.
+- **Tabelle:** vollständig (alle 12 Teams) **und korrekt** dank Wikipedia. Wikipedia-Inhalte stehen unter CC BY-SA; während einer laufenden Saison kann die Tabelle minimal verzögert aktualisiert werden (Editoren pflegen i.d.R. innerhalb von Stunden nach).
 - **Form / Resultate:** Der TheSportsDB-Test-Key `123` deckelt vergangene Spiele auf wenige Datensätze (oft nur 1–2 statt 5). Die UI beschriftet das ehrlich. Echte 5-Spiele-Form gäbe es mit einem TheSportsDB-**Premium-Key** — dann nur `API_KEY` in [`index.html`](index.html) ersetzen.
 
 ## 🚀 Deployment

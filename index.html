@@ -412,7 +412,7 @@
 </main>
 
 <footer>
-  <p>Spiele &amp; Form via <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> · Tabelle via <a href="https://www.openligadb.de" target="_blank" rel="noopener">OpenLigaDB</a> · gebaut von Noah</p>
+  <p>Spiele &amp; Form via <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> · Tabelle via <a href="https://de.wikipedia.org/wiki/Super_League_2025/26_(Schweiz)" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA) · gebaut von Noah</p>
 </footer>
 
 <script>
@@ -423,9 +423,9 @@
   const API_KEY = "123"; // TheSportsDB public test key — used für Spiel/Form/Resultate
   const BASE = `https://www.thesportsdb.com/api/v1/json/${API_KEY}`;
   const TEAM_NAME_CANDIDATES = ["FC Zurich", "FC Zürich", "Zurich"];
-  // OpenLigaDB: kostenlos, ohne Key, CORS-fähig — liefert die VOLLE 12er-Tabelle.
-  const OPENLIGA = "https://api.openligadb.de";
-  const SSL_SHORTCUT = "ssl"; // Swiss Super League
+  // Wikipedia (de): kostenlos, ohne Key, CORS-fähig (origin=*) — liefert die
+  // VOLLE und KORREKTE 12er-Tabelle der Super League.
+  const WIKI_API = "https://de.wikipedia.org/w/api.php";
 
   // ---- State ----
   let fczTeamId = null;
@@ -452,6 +452,48 @@
   function isFczName(name){
     // "FC Zürich" matchen, aber NICHT "Grasshopper Club Zürich"
     return /\bfc\s*z(ü|ue|u)rich\b/i.test(name || "");
+  }
+
+  // Wikipedia-Artikeltitel für die laufende Saison, z.B. "Super League 2025/26 (Schweiz)"
+  function swissSeasonTitle(){
+    const y = seasonStartYear();
+    const yy = String((y + 1) % 100).padStart(2, "0");
+    return `Super League ${y}/${yy} (Schweiz)`;
+  }
+
+  // Parst die {{Fußballtabelle/Zeile|…}}-Blöcke aus dem Wikitext.
+  // Nimmt die letzte vollständige (~12 Teams) Tabelle = finale/aktuelle Gesamttabelle.
+  function parseWikiTable(wikitext){
+    const zeileRe = /\{\{Fußballtabelle\/Zeile\|([^}]*)\}\}/g;
+    const tables = [];
+    let current = null, m;
+    while ((m = zeileRe.exec(wikitext)) !== null){
+      const params = {};
+      m[1].split("|").forEach(p => {
+        const i = p.indexOf("=");
+        if (i > -1) params[p.slice(0, i).trim()] = p.slice(i + 1).trim();
+      });
+      if (parseInt(params.Rang, 10) === 1 || !current){ current = []; tables.push(current); }
+      current.push(params);
+    }
+    const full = tables.filter(t => t.length >= 10);
+    const chosen = full.length ? full[full.length - 1] : tables[tables.length - 1];
+    if (!chosen) return null;
+    return chosen.map(p => {
+      const S = +p.S || 0, U = +p.U || 0, N = +p.N || 0, ET = +p.ET || 0, GT = +p.GT || 0;
+      let team = (p.Verein || "").replace(/\[\[/g, "").replace(/\]\].*$/, "");
+      if (team.includes("|")) team = team.split("|").pop();
+      team = team.trim();
+      return {
+        rank: +p.Rang,
+        team,
+        played: S + U + N,
+        win: S, draw: U, loss: N,
+        gd: ET - GT,
+        points: S * 3 + U,
+        isFcz: isFczName(team)
+      };
+    }).sort((a, b) => a.rank - b.rank);
   }
 
   async function fetchJson(url){
@@ -510,9 +552,9 @@
     const venueEl = document.getElementById("venue");
 
     if (!event){
-      setEmpty(matchupEl.parentElement, "Keine kommenden Spiele geplant. Schau später nochmal vorbei.");
-      matchupEl.remove();
+      matchupEl.innerHTML = `<span class="fcz">FCZ</span>`;
       document.getElementById("countdown").hidden = true;
+      venueEl.innerHTML = `<span class="empty-state">Aktuell ist kein nächstes Spiel angesetzt — Sommerpause. Schau später nochmal vorbei.</span>`;
       return;
     }
 
@@ -586,25 +628,14 @@
   // Liefert die volle Tabelle von OpenLigaDB; fällt bei Fehler auf die
   // (gedeckelte) TheSportsDB-Tabelle zurück. Gibt normalisierte Zeilen zurück.
   async function fetchTable(){
-    // 1) OpenLigaDB — volle 12er-Tabelle, kostenlos, ohne Key
+    // 1) Wikipedia — volle UND korrekte 12er-Tabelle, kostenlos, ohne Key (CORS via origin=*)
     try{
-      const data = await fetchJson(`${OPENLIGA}/getbltable/${SSL_SHORTCUT}/${seasonStartYear()}`);
-      if (Array.isArray(data) && data.length){
-        const sorted = [...data].sort((a,b) =>
-          (b.points - a.points) ||
-          ((b.goals - b.opponentGoals) - (a.goals - a.opponentGoals)) ||
-          (b.goals - a.goals)
-        );
-        return sorted.map((t, i) => ({
-          rank: i + 1,
-          team: t.teamName,
-          played: t.matches,
-          win: t.won, draw: t.draw, loss: t.lost,
-          gd: t.goals - t.opponentGoals,
-          points: t.points,
-          isFcz: isFczName(t.teamName)
-        }));
-      }
+      const url = `${WIKI_API}?action=parse&page=${encodeURIComponent(swissSeasonTitle())}` +
+                  `&prop=wikitext&format=json&origin=*`;
+      const data = await fetchJson(url);
+      const wt = data && data.parse && data.parse.wikitext && data.parse.wikitext["*"];
+      const rows = wt ? parseWikiTable(wt) : null;
+      if (rows && rows.length) return rows;
     } catch(e){ /* fällt unten auf TheSportsDB zurück */ }
 
     // 2) Fallback: TheSportsDB (Free-Key, oft nur Top 5)
