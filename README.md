@@ -41,7 +41,16 @@ Alles in **einer einzigen `index.html`** — kein Backend, kein Build, kein Fram
 3. Mit der Liga-ID: `lookuptable.php` für die aktuelle Saison (automatisch aus dem Datum berechnet, Juli–Mai-Logik der Super League).
 4. Der Countdown läuft client-seitig per `setInterval` auf Basis des Match-Timestamps.
 
-> Der Test-Key `123` hat ein Rate-Limit, und manche Endpoints (z. B. Tabellen nicht-„featured" Ligen) können mal leer zurückkommen — dafür gibt es überall einen Empty-State.
+> Der Test-Key `123` hat ein Rate-Limit, und manche Endpoints können leer zurückkommen — dafür gibt es überall einen Empty-State.
+
+### ⚠️ Bekannte Limits des kostenlosen Keys
+
+Der öffentliche Test-Key `123` **deckelt jeden Endpoint auf wenige Datensätze** (gilt für alle Ligen, nicht nur die Super League):
+
+- **Tabelle:** nur die ersten ~5 Plätze statt aller 12 Teams → die Sektion ist ehrlich als „Top 5" beschriftet, mit Link zur kompletten Tabelle.
+- **Form / Resultate:** oft nur 1–2 vergangene Spiele statt der letzten 5.
+
+Die vollständige Tabelle und echte 5-Spiele-Form gibt es nur mit einem **Premium-Key** von TheSportsDB. Dann müsste lediglich `API_KEY` in [`index.html`](index.html) ersetzt werden — die Logik bleibt gleich.
 
 ## 🚀 Deployment
 

@@ -244,6 +244,16 @@
     padding: 6px 0;
   }
 
+  .note{
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+    margin: 11px 2px 0;
+    font-style: italic;
+  }
+  .note a{ color: var(--blue); text-decoration: none; font-style: normal; }
+  .note a:hover{ color: var(--blue-bright); text-decoration: underline; }
+
   /* FORM PILLS */
   .form-pills{ display:flex; gap: 9px; }
   .pill{
@@ -383,8 +393,9 @@
   </section>
 
   <section id="formSection">
-    <p class="eyebrow">Form (letzte 5 Spiele)</p>
+    <p class="eyebrow" id="formEyebrow">Form</p>
     <div class="form-pills" id="formPills"><span class="empty-state">Lädt …</span></div>
+    <p class="note" id="formNote" hidden></p>
   </section>
 
   <section id="resultsSection">
@@ -393,8 +404,9 @@
   </section>
 
   <section id="tableSection">
-    <p class="eyebrow">Tabelle</p>
+    <p class="eyebrow" id="tableEyebrow">Tabelle</p>
     <div class="table-wrap" id="tableWrap"><p class="empty-state" style="padding:16px;">Lädt …</p></div>
+    <p class="note" id="tableNote" hidden></p>
   </section>
 
 </main>
@@ -508,11 +520,25 @@
   // ---- Step 3: last results + form ----
   function renderForm(events){
     const formEl = document.getElementById("formPills");
+    const eyebrowEl = document.getElementById("formEyebrow");
+    const noteEl = document.getElementById("formNote");
     if (!events || !events.length){
+      eyebrowEl.textContent = "Form";
+      noteEl.hidden = true;
       setEmpty(formEl, "Noch keine Resultate.");
       return;
     }
     const sorted = [...events].sort((a,b) => new Date(a.dateEvent) - new Date(b.dateEvent));
+    eyebrowEl.textContent = sorted.length === 1
+      ? "Form (letztes Spiel)"
+      : `Form (letzte ${sorted.length} Spiele)`;
+    // Der kostenlose API-Key liefert nur begrenzt vergangene Spiele zurück.
+    if (sorted.length < 5){
+      noteEl.textContent = "Die kostenlose TheSportsDB-API gibt nur wenige vergangene Spiele zurück — daher ggf. weniger als 5.";
+      noteEl.hidden = false;
+    } else {
+      noteEl.hidden = true;
+    }
     formEl.innerHTML = sorted.map(ev => {
       const isHome = /zur/i.test(ev.strHomeTeam);
       const fczGoals = isHome ? +ev.intHomeScore : +ev.intAwayScore;
@@ -544,9 +570,22 @@
   // ---- Step 4: league table ----
   function renderTable(rows, fczId){
     const wrapEl = document.getElementById("tableWrap");
+    const eyebrowEl = document.getElementById("tableEyebrow");
+    const noteEl = document.getElementById("tableNote");
     if (!rows || !rows.length){
+      eyebrowEl.textContent = "Tabelle";
+      noteEl.hidden = true;
       wrapEl.innerHTML = `<p class="empty-state" style="padding:16px;">Tabelle aktuell nicht verfügbar (Free-API-Limit). Einfach später nochmal versuchen.</p>`;
       return;
+    }
+    // Der kostenlose API-Key deckelt die Tabelle auf wenige Plätze (typisch Top 5).
+    const full = rows.length >= 10;
+    eyebrowEl.textContent = full ? "Tabelle" : `Tabelle (Top ${rows.length})`;
+    if (full){
+      noteEl.hidden = true;
+    } else {
+      noteEl.innerHTML = `Die kostenlose TheSportsDB-API liefert nur die ersten ${rows.length} Plätze. Die komplette Super-League-Tabelle gibt's <a href="https://www.google.com/search?q=Super+League+Tabelle" target="_blank" rel="noopener">hier</a>.`;
+      noteEl.hidden = false;
     }
     const body = rows.map(r => `
       <tr class="${r.idTeam === fczId ? "fcz-row" : ""}">
