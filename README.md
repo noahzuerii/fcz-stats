@@ -1,5 +1,7 @@
 # FCZ Matchday Dashboard
 
+**Live:** https://noahzuerii.github.io/fcz-stats/
+
 Ein Live-Dashboard für den FC Zürich: nächstes Spiel mit Countdown, Form der letzten 5 Spiele, letzte Resultate und die aktuelle Tabelle der Super League.
 
 Komplett **statisch** — eine `index.html`, kein Build-Step, kein Backend. Die Daten kommen direkt im Browser von der kostenlosen [TheSportsDB](https://www.thesportsdb.com) API.
@@ -13,25 +15,24 @@ Komplett **statisch** — eine `index.html`, kein Build-Step, kein Backend. Die 
 
 Die API nutzt den öffentlichen Test-Key `123`. Der hat ein Rate-Limit und manche Endpoints (z.B. die Tabelle für nicht-"featured" Ligen) können gelegentlich leer zurückkommen — dafür gibt's überall einen Empty-State statt einem Absturz.
 
-## Lokal testen
+## Hosting
 
-Einfach `index.html` per Doppelklick öffnen funktioniert meist, aber manche Browser blockieren `fetch()` auf `file://`. Sicherer ist ein kleiner lokaler Server:
+Die Seite läuft ausschliesslich über **GitHub Pages** unter:
 
-```bash
-python3 -m http.server 8000
-# dann im Browser: http://localhost:8000
-```
+👉 **https://noahzuerii.github.io/fcz-stats/**
 
-## Hosten auf GitHub Pages
+Es gibt keinen separaten Server und kein Backend — der Branch `main` (Ordner `/root`) wird direkt von GitHub Pages ausgeliefert.
 
-1. Neues Repo erstellen (z.B. `fcz-dashboard`) und `index.html` hochladen/pushen.
-2. Im Repo: **Settings → Pages**.
-3. Unter "Build and deployment" → Source: **Deploy from a branch**.
-4. Branch: `main`, Ordner: `/ (root)` → **Save**.
-5. Nach ein bis zwei Minuten ist die Seite live unter:
-   `https://<dein-github-username>.github.io/fcz-dashboard/`
+### Pages aktivieren / prüfen
 
-Kein GitHub Actions Workflow nötig — für eine einzelne statische HTML-Datei reicht die Standard-Pages-Deployment komplett.
+1. Im Repo: **Settings → Pages**.
+2. Unter "Build and deployment" → Source: **Deploy from a branch**.
+3. Branch: `main`, Ordner: `/ (root)` → **Save**.
+4. Nach ein bis zwei Minuten ist die Seite live unter der oben genannten URL.
+
+Kein GitHub Actions Workflow nötig — für eine einzelne statische HTML-Datei reicht das Standard-Pages-Deployment komplett.
+
+> **Hinweis:** Lokales Öffnen von `index.html` per `file://` wird von vielen Browsern für `fetch()` blockiert. Da die Seite ohnehin nur über GitHub Pages betrieben wird, ist die Live-URL der einzige unterstützte Weg, das Dashboard zu nutzen.
 
 ## Mögliche nächste Schritte
 
