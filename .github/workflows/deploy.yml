@@ -29,6 +29,9 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          # Aktiviert GitHub Pages automatisch, falls noch nicht eingeschaltet.
+          enablement: true
 
       # Kein Build nötig – die ganze Repo-Root (index.html) wird als Artefakt hochgeladen.
       - name: Upload artifact
