@@ -83,6 +83,45 @@
   #lineupSection{ animation-delay: 0.30s; }
   #tableSection{ animation-delay: 0.35s; }
 
+  /* ---- OneFootball-Style Motion ---- */
+  @keyframes popIn{
+    from{ opacity: 0; transform: translateY(12px) scale(0.96); }
+    to{ opacity: 1; transform: none; }
+  }
+  @keyframes badgePop{
+    0%{ opacity: 0; transform: scale(0.4) rotate(-8deg); }
+    60%{ transform: scale(1.12) rotate(0); }
+    100%{ opacity: 1; transform: scale(1); }
+  }
+  @keyframes slideIn{
+    from{ opacity: 0; transform: translateX(-10px); }
+    to{ opacity: 1; transform: none; }
+  }
+  @keyframes pulseGlow{
+    0%, 100%{ box-shadow: 0 0 0 0 rgba(242,193,78,0.55); }
+    50%{ box-shadow: 0 0 0 7px rgba(242,193,78,0); }
+  }
+  @keyframes sweepBar{
+    0%{ background-position: 200% 0; }
+    100%{ background-position: -200% 0; }
+  }
+  @keyframes digitPop{
+    0%{ transform: scale(1.16); color: var(--blue-bright); }
+    100%{ transform: scale(1); }
+  }
+  @keyframes shimmer{
+    0%{ background-position: -200% 0; }
+    100%{ background-position: 200% 0; }
+  }
+  .skeleton{
+    display: inline-block;
+    border-radius: 8px;
+    background: linear-gradient(90deg, var(--bg-elevated-2) 25%, rgba(108,172,228,0.18) 37%, var(--bg-elevated-2) 63%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+    color: transparent;
+  }
+
   header.topbar{
     position: relative;
     z-index: 1;
@@ -183,7 +222,9 @@
     top: 0; left: 0; right: 0;
     height: 3px;
     background: linear-gradient(90deg, transparent, var(--blue-bright), var(--amber), transparent);
-    opacity: 0.8;
+    background-size: 200% 100%;
+    animation: sweepBar 4s linear infinite;
+    opacity: 0.85;
   }
 
   .matchup{
@@ -226,6 +267,7 @@
     font-variant-numeric: tabular-nums;
     text-shadow: 0 0 18px rgba(242,193,78,0.35);
   }
+  .clock-unit span.pulse{ animation: digitPop 0.5s ease; }
   .clock-unit label{
     display: block;
     font-size: 10px;
@@ -271,6 +313,8 @@
     position: relative;
     overflow: hidden;
     transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s;
+    animation: popIn 0.5s cubic-bezier(.2,.7,.3,1) both;
+    animation-delay: calc(var(--i, 0) * 0.07s + 0.05s);
   }
   .stat-card:hover{
     transform: translateY(-3px);
@@ -284,7 +328,20 @@
     width: 100%; height: 2px;
     background: linear-gradient(90deg, var(--blue-bright), transparent);
     opacity: 0.7;
+    z-index: 1;
   }
+  /* diagonaler Glanz-Sweep beim Hover */
+  .stat-card::after{
+    content: "";
+    position: absolute;
+    top: 0; left: -75%;
+    width: 50%; height: 100%;
+    transform: skewX(-20deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
+    transition: left 0.6s ease;
+    pointer-events: none;
+  }
+  .stat-card:hover::after{ left: 130%; }
   .stat-card .stat-label{
     font-size: 11px;
     letter-spacing: 1px;
@@ -330,6 +387,10 @@
     transition: transform 0.15s;
   }
   .form-badge:hover{ transform: scale(1.12); }
+  .form-row .form-badge{
+    animation: badgePop 0.45s cubic-bezier(.2,.8,.3,1.2) both;
+    animation-delay: calc(var(--i, 0) * 0.08s + 0.1s);
+  }
   .form-badge.w{ background: var(--win); }
   .form-badge.d{ background: var(--draw); color: #2a2410; }
   .form-badge.l{ background: var(--loss); }
@@ -355,12 +416,15 @@
     content: "";
     position: absolute; top: 0; left: 0; right: 0; height: 3px;
     background: linear-gradient(90deg, transparent, var(--amber), transparent);
+    background-size: 200% 100%;
+    animation: sweepBar 3.5s linear infinite;
   }
   .derby-tag{
     display: inline-block;
     font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
     color: #2a2410; background: var(--amber);
     padding: 3px 11px; border-radius: 999px; margin-bottom: 11px;
+    animation: pulseGlow 2s ease-in-out infinite;
   }
   .derby-match{
     font-family: 'Big Shoulders Display', sans-serif; font-weight: 800;
@@ -428,6 +492,8 @@
     font-size: 14px;
     gap: 12px;
     transition: transform 0.15s, border-color 0.2s, background 0.2s;
+    animation: slideIn 0.4s ease both;
+    animation-delay: calc(var(--i, 0) * 0.06s + 0.05s);
   }
   .result-list li:hover{
     transform: translateX(3px);
@@ -515,7 +581,7 @@
 
   <section class="hero" id="heroSection">
     <p class="eyebrow">Nächstes Spiel</p>
-    <div class="matchup" id="matchup">Lädt …</div>
+    <div class="matchup" id="matchup"><span class="skeleton" style="width:70%;">FCZ vs …</span></div>
     <div class="countdown" id="countdown" hidden>
       <div class="clock-unit"><span id="cd-d">--</span><label>Tage</label></div>
       <div class="clock-unit"><span id="cd-h">--</span><label>Std</label></div>
@@ -542,7 +608,11 @@
 
   <section id="resultsSection">
     <p class="eyebrow">Letzte Resultate</p>
-    <ul class="result-list" id="resultList"><li class="empty-state">Lädt …</li></ul>
+    <ul class="result-list" id="resultList">
+      <li><span class="skeleton" style="width:55%;">Team – Team</span><span class="skeleton" style="width:40px;">0:0</span></li>
+      <li><span class="skeleton" style="width:48%;">Team – Team</span><span class="skeleton" style="width:40px;">0:0</span></li>
+      <li><span class="skeleton" style="width:60%;">Team – Team</span><span class="skeleton" style="width:40px;">0:0</span></li>
+    </ul>
   </section>
 
   <section id="lineupSection" hidden>
@@ -552,7 +622,14 @@
 
   <section id="tableSection">
     <p class="eyebrow" id="tableEyebrow">Tabelle</p>
-    <div class="table-wrap" id="tableWrap"><p class="empty-state" style="padding:16px;">Lädt …</p></div>
+    <div class="table-wrap" id="tableWrap">
+      <div style="padding:16px; display:flex; flex-direction:column; gap:9px;">
+        <span class="skeleton" style="width:100%; height:18px;">.</span>
+        <span class="skeleton" style="width:92%; height:18px;">.</span>
+        <span class="skeleton" style="width:96%; height:18px;">.</span>
+        <span class="skeleton" style="width:88%; height:18px;">.</span>
+      </div>
+    </div>
     <p class="note" id="tableNote" hidden></p>
   </section>
 
@@ -656,6 +733,25 @@
     el.innerHTML = `<span class="empty-state">${message}</span>`;
   }
 
+  const prefersReducedMotion = () =>
+    window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Zählt eine Zahl animiert von 0 hoch (OneFootball-Style)
+  function animateCount(el, target, opts){
+    const { decimals = 0, prefix = "", suffix = "", duration = 900 } = opts || {};
+    const fmt = v => prefix + v.toFixed(decimals) + suffix;
+    if (prefersReducedMotion() || !Number.isFinite(target)){ el.textContent = fmt(target || 0); return; }
+    const start = performance.now();
+    function frame(now){
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+      el.textContent = fmt(target * eased);
+      if (t < 1) requestAnimationFrame(frame);
+      else el.textContent = fmt(target);
+    }
+    requestAnimationFrame(frame);
+  }
+
   // ---- Step 1: find FCZ team + league id ----
   async function findFczTeam(){
     for (const name of TEAM_NAME_CANDIDATES){
@@ -691,7 +787,12 @@
       document.getElementById("cd-d").textContent = Math.floor(s / 86400);
       document.getElementById("cd-h").textContent = Math.floor((s % 86400) / 3600);
       document.getElementById("cd-m").textContent = Math.floor((s % 3600) / 60);
-      document.getElementById("cd-s").textContent = s % 60;
+      const secEl = document.getElementById("cd-s");
+      secEl.textContent = s % 60;
+      // Puls bei jedem Tick neu auslösen
+      secEl.classList.remove("pulse");
+      void secEl.offsetWidth;
+      secEl.classList.add("pulse");
     }
     tick();
     countdownTimer = setInterval(tick, 1000);
@@ -779,9 +880,9 @@
       return;
     }
     const sorted = [...events].sort((a,b) => new Date(b.dateEvent) - new Date(a.dateEvent));
-    listEl.innerHTML = sorted.map(ev => {
+    listEl.innerHTML = sorted.map((ev, i) => {
       const date = new Date(ev.dateEvent).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit" });
-      return `<li>
+      return `<li style="--i:${i}">
         <span class="res-teams">${ev.strHomeTeam} – ${ev.strAwayTeam}<br>
           <a class="res-yt" href="${highlightUrl(ev)}" target="_blank" rel="noopener">▶ Highlights</a>
         </span>
@@ -879,8 +980,8 @@
     const losses = outcomes.filter(o => o.res === "l").length;
     const pts = wins * 3 + draws;
 
-    const badges = outcomes.map(o =>
-      `<span class="form-badge ${o.res}" title="${o.gf}:${o.ga}">${labels[o.res]}</span>`
+    const badges = outcomes.map((o, i) =>
+      `<span class="form-badge ${o.res}" style="--i:${i}" title="${o.gf}:${o.ga}">${labels[o.res]}</span>`
     ).join("");
     rowEl.innerHTML = badges +
       `<span class="form-meta">${wins}S · ${draws}U · ${losses}N — ${pts} Pkt aus ${outcomes.length}</span>`;
@@ -900,38 +1001,48 @@
     const gaAvg = (fcz.ga / fcz.played);
     const total = rows.length;
     const gdClass = fcz.gd > 0 ? "good" : fcz.gd < 0 ? "bad" : "";
-    const gdStr = fcz.gd > 0 ? "+" + fcz.gd : "" + fcz.gd;
     const hasGoals = Number.isFinite(fcz.gf) && Number.isFinite(fcz.ga);
 
     const cards = [
-      { label: "Tabellenplatz", value: fcz.rank + ".", cls: "accent",
+      { label: "Tabellenplatz", num: fcz.rank, suffix: ".", cls: "accent",
         sub: total ? `von ${total} Teams` : "" },
-      { label: "Punkte", value: fcz.points, cls: "accent",
+      { label: "Punkte", num: fcz.points, cls: "accent",
         sub: `aus ${fcz.played} Spielen` },
-      { label: "Punkteschnitt", value: ppg.toFixed(2),
+      { label: "Punkteschnitt", num: ppg, decimals: 2,
         sub: "Punkte pro Spiel" },
-      { label: "Siegquote", value: winPct.toFixed(0) + "%",
+      { label: "Siegquote", num: winPct, decimals: 0, suffix: "%",
         cls: winPct >= 50 ? "good" : winPct < 30 ? "bad" : "",
         sub: `${fcz.win}S · ${fcz.draw}U · ${fcz.loss}N` },
-      { label: "Tordifferenz", value: gdStr, cls: gdClass,
+      { label: "Tordifferenz", num: fcz.gd, prefix: fcz.gd > 0 ? "+" : "", cls: gdClass,
         sub: hasGoals ? `${fcz.gf} erzielt · ${fcz.ga} kassiert` : "" }
     ];
     if (hasGoals){
       cards.push(
-        { label: "Tore pro Spiel", value: gfAvg.toFixed(2), cls: "good",
+        { label: "Tore pro Spiel", num: gfAvg, decimals: 2, cls: "good",
           sub: "erzielt im Schnitt" },
-        { label: "Gegentore / Spiel", value: gaAvg.toFixed(2), cls: "bad",
+        { label: "Gegentore / Spiel", num: gaAvg, decimals: 2, cls: "bad",
           sub: "kassiert im Schnitt" }
       );
     }
 
-    gridEl.innerHTML = cards.map(c => `
-      <div class="stat-card">
+    gridEl.innerHTML = cards.map((c, i) => `
+      <div class="stat-card" style="--i:${i}">
         <p class="stat-label">${c.label}</p>
-        <p class="stat-value ${c.cls || ""}">${c.value}</p>
+        <p class="stat-value ${c.cls || ""}"
+           data-num="${c.num}" data-dec="${c.decimals || 0}"
+           data-pre="${c.prefix || ""}" data-suf="${c.suffix || ""}">0</p>
         ${c.sub ? `<p class="stat-sub">${c.sub}</p>` : ""}
       </div>`).join("");
     sectionEl.hidden = false;
+
+    // Zahlen gestaffelt hochzählen lassen
+    gridEl.querySelectorAll(".stat-value").forEach((el, i) => {
+      const run = () => animateCount(el, parseFloat(el.dataset.num), {
+        decimals: +el.dataset.dec, prefix: el.dataset.pre, suffix: el.dataset.suf
+      });
+      if (prefersReducedMotion()) run();
+      else setTimeout(run, 140 + i * 90);
+    });
   }
 
   // ---- Step 4: league table ----
