@@ -20,6 +20,8 @@
 |---|---|
 | 🗓️ **Nächstes Spiel** | Heim/Auswärts-Matchup mit Ort und Anstosszeit |
 | ⏱️ **Live-Countdown** | Tage / Std / Min / Sek bis zum Anpfiff, läuft im Browser |
+| 📈 **Form** | Letzte Spiele als S/U/N-Badges inkl. Punkteausbeute |
+| 📊 **Saison-Statistik** | Tabellenplatz, Punkteschnitt, Siegquote, Tordifferenz, Tore & Gegentore pro Spiel |
 | 📋 **Resultate** | Liste der jüngsten Spiele mit Endstand |
 | 🏆 **Tabelle** | Aktuelle Super-League-Tabelle, FCZ-Zeile hervorgehoben |
 | 🛡️ **Wappen** | FCZ-Badge wird live aus der API geladen |

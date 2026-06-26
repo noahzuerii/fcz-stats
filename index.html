@@ -76,8 +76,10 @@
   }
   header.topbar{ animation-delay: 0s; }
   #heroSection{ animation-delay: 0.05s; }
-  #resultsSection{ animation-delay: 0.14s; }
-  #tableSection{ animation-delay: 0.22s; }
+  #formSection{ animation-delay: 0.12s; }
+  #statsSection{ animation-delay: 0.18s; }
+  #resultsSection{ animation-delay: 0.24s; }
+  #tableSection{ animation-delay: 0.30s; }
 
   header.topbar{
     position: relative;
@@ -253,6 +255,88 @@
   .note a{ color: var(--blue); text-decoration: none; font-style: normal; }
   .note a:hover{ color: var(--blue-bright); text-decoration: underline; }
 
+  /* SEASON STATS */
+  .stats-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+  }
+  .stat-card{
+    background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-elevated-2) 100%);
+    border: 1px solid var(--blue-dim);
+    border-radius: 14px;
+    padding: 16px 16px 14px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s;
+  }
+  .stat-card:hover{
+    transform: translateY(-3px);
+    border-color: var(--blue);
+    box-shadow: 0 12px 26px -16px rgba(0,0,0,0.7);
+  }
+  .stat-card::before{
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, var(--blue-bright), transparent);
+    opacity: 0.7;
+  }
+  .stat-card .stat-label{
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 8px;
+  }
+  .stat-card .stat-value{
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: 28px;
+    color: var(--white);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-card .stat-value.accent{ color: var(--amber); text-shadow: 0 0 18px rgba(242,193,78,0.3); }
+  .stat-card .stat-value.good{ color: var(--win); }
+  .stat-card .stat-value.bad{ color: var(--loss); }
+  .stat-card .stat-sub{
+    font-size: 12px;
+    color: var(--muted);
+    margin: 7px 0 0;
+  }
+
+  /* FORM STREAK */
+  .form-row{
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .form-badge{
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Big Shoulders Display', sans-serif;
+    font-weight: 800;
+    font-size: 17px;
+    color: var(--white);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
+    transition: transform 0.15s;
+  }
+  .form-badge:hover{ transform: scale(1.12); }
+  .form-badge.w{ background: var(--win); }
+  .form-badge.d{ background: var(--draw); color: #2a2410; }
+  .form-badge.l{ background: var(--loss); }
+  .form-meta{
+    color: var(--muted);
+    font-size: 13px;
+    margin-left: 6px;
+  }
+
   /* RESULTS LIST */
   .result-list{
     list-style: none;
@@ -370,6 +454,16 @@
     <p class="venue" id="venue"></p>
   </section>
 
+  <section id="formSection" hidden>
+    <p class="eyebrow">Form (letzte Spiele)</p>
+    <div class="form-row" id="formRow"></div>
+  </section>
+
+  <section id="statsSection" hidden>
+    <p class="eyebrow">Saison-Statistik</p>
+    <div class="stats-grid" id="statsGrid"></div>
+  </section>
+
   <section id="resultsSection">
     <p class="eyebrow">Letzte Resultate</p>
     <ul class="result-list" id="resultList"><li class="empty-state">Lädt …</li></ul>
@@ -461,6 +555,7 @@
         team,
         played: S + U + N,
         win: S, draw: U, loss: N,
+        gf: ET, ga: GT,
         gd: ET - GT,
         points: S * 3 + U,
         isFcz: isFczName(team)
@@ -564,6 +659,91 @@
     }).join("");
   }
 
+  // ---- Form aus den letzten Spielen (S/U/N) ----
+  // Bestimmt für jedes Spiel das FCZ-Ergebnis anhand der Tore und der Seite.
+  function fczOutcome(ev){
+    const hs = parseInt(ev.intHomeScore, 10);
+    const as = parseInt(ev.intAwayScore, 10);
+    if (Number.isNaN(hs) || Number.isNaN(as)) return null;
+    const fczHome = isFczName(ev.strHomeTeam);
+    const fczAway = isFczName(ev.strAwayTeam);
+    if (!fczHome && !fczAway) return null;
+    const gf = fczHome ? hs : as;
+    const ga = fczHome ? as : hs;
+    return { res: gf > ga ? "w" : gf < ga ? "l" : "d", gf, ga };
+  }
+
+  function renderForm(events){
+    const sectionEl = document.getElementById("formSection");
+    const rowEl = document.getElementById("formRow");
+    if (!events || !events.length){ sectionEl.hidden = true; return; }
+
+    // älteste -> neueste, damit der jüngste Badge rechts steht
+    const sorted = [...events].sort((a,b) => new Date(a.dateEvent) - new Date(b.dateEvent));
+    const outcomes = sorted.map(fczOutcome).filter(Boolean);
+    if (!outcomes.length){ sectionEl.hidden = true; return; }
+
+    const labels = { w: "S", d: "U", l: "N" };
+    const wins = outcomes.filter(o => o.res === "w").length;
+    const draws = outcomes.filter(o => o.res === "d").length;
+    const losses = outcomes.filter(o => o.res === "l").length;
+    const pts = wins * 3 + draws;
+
+    const badges = outcomes.map(o =>
+      `<span class="form-badge ${o.res}" title="${o.gf}:${o.ga}">${labels[o.res]}</span>`
+    ).join("");
+    rowEl.innerHTML = badges +
+      `<span class="form-meta">${wins}S · ${draws}U · ${losses}N — ${pts} Pkt aus ${outcomes.length}</span>`;
+    sectionEl.hidden = false;
+  }
+
+  // ---- Saison-Statistik aus der Tabellen-Zeile des FCZ ----
+  function renderStats(rows){
+    const sectionEl = document.getElementById("statsSection");
+    const gridEl = document.getElementById("statsGrid");
+    const fcz = rows && rows.find(r => r.isFcz);
+    if (!fcz || !fcz.played){ sectionEl.hidden = true; return; }
+
+    const ppg = (fcz.points / fcz.played);
+    const winPct = (fcz.win / fcz.played) * 100;
+    const gfAvg = (fcz.gf / fcz.played);
+    const gaAvg = (fcz.ga / fcz.played);
+    const total = rows.length;
+    const gdClass = fcz.gd > 0 ? "good" : fcz.gd < 0 ? "bad" : "";
+    const gdStr = fcz.gd > 0 ? "+" + fcz.gd : "" + fcz.gd;
+    const hasGoals = Number.isFinite(fcz.gf) && Number.isFinite(fcz.ga);
+
+    const cards = [
+      { label: "Tabellenplatz", value: fcz.rank + ".", cls: "accent",
+        sub: total ? `von ${total} Teams` : "" },
+      { label: "Punkte", value: fcz.points, cls: "accent",
+        sub: `aus ${fcz.played} Spielen` },
+      { label: "Punkteschnitt", value: ppg.toFixed(2),
+        sub: "Punkte pro Spiel" },
+      { label: "Siegquote", value: winPct.toFixed(0) + "%",
+        cls: winPct >= 50 ? "good" : winPct < 30 ? "bad" : "",
+        sub: `${fcz.win}S · ${fcz.draw}U · ${fcz.loss}N` },
+      { label: "Tordifferenz", value: gdStr, cls: gdClass,
+        sub: hasGoals ? `${fcz.gf} erzielt · ${fcz.ga} kassiert` : "" }
+    ];
+    if (hasGoals){
+      cards.push(
+        { label: "Tore pro Spiel", value: gfAvg.toFixed(2), cls: "good",
+          sub: "erzielt im Schnitt" },
+        { label: "Gegentore / Spiel", value: gaAvg.toFixed(2), cls: "bad",
+          sub: "kassiert im Schnitt" }
+      );
+    }
+
+    gridEl.innerHTML = cards.map(c => `
+      <div class="stat-card">
+        <p class="stat-label">${c.label}</p>
+        <p class="stat-value ${c.cls || ""}">${c.value}</p>
+        ${c.sub ? `<p class="stat-sub">${c.sub}</p>` : ""}
+      </div>`).join("");
+    sectionEl.hidden = false;
+  }
+
   // ---- Step 4: league table ----
   // Liefert die volle Tabelle von OpenLigaDB; fällt bei Fehler auf die
   // (gedeckelte) TheSportsDB-Tabelle zurück. Gibt normalisierte Zeilen zurück.
@@ -589,6 +769,7 @@
             team: r.strTeam,
             played: +r.intPlayed,
             win: +r.intWin, draw: +r.intDraw, loss: +r.intLoss,
+            gf: +r.intGoalsFor, ga: +r.intGoalsAgainst,
             gd: +r.intGoalDifference,
             points: +r.intPoints,
             isFcz: r.idTeam === fczTeamId
@@ -672,8 +853,11 @@
 
       renderNextMatch(nextEvent);
       renderResults(lastEvents);
+      renderForm(lastEvents);
 
-      renderTable(await fetchTable());
+      const tableRows = await fetchTable();
+      renderTable(tableRows);
+      renderStats(tableRows);
 
     } catch(err){
       console.error(err);
