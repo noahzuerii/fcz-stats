@@ -22,6 +22,9 @@
 | ⏱️ **Live-Countdown** | Tage / Std / Min / Sek bis zum Anpfiff, läuft im Browser |
 | 📈 **Form** | Letzte Spiele als S/U/N-Badges inkl. Punkteausbeute |
 | 📊 **Saison-Statistik** | Tabellenplatz, Punkteschnitt, Siegquote, Tordifferenz, Tore & Gegentore pro Spiel |
+| 🔥 **Nächstes Derby** | Erkennt automatisch das nächste Zürcher Derby (FCZ vs. GC) mit Datum & Countdown-Tagen |
+| ▶️ **Highlights** | Pro Resultat ein YouTube-Highlights-Link (echtes Video wenn verfügbar, sonst Suche) |
+| 🧩 **Aufstellung** | Formation + Spieler des letzten Spiels nach Mannschaftsteilen (sofern API-Daten vorhanden) |
 | 📋 **Resultate** | Liste der jüngsten Spiele mit Endstand |
 | 🏆 **Tabelle** | Aktuelle Super-League-Tabelle, FCZ-Zeile hervorgehoben |
 | 🛡️ **Wappen** | FCZ-Badge wird live aus der API geladen |
@@ -48,6 +51,9 @@ Alles in **einer einzigen `index.html`** — kein Backend, kein Build, kein Fram
 
 - **Tabelle:** vollständig (alle 12 Teams) **und korrekt** dank Wikipedia. Wikipedia-Inhalte stehen unter CC BY-SA; während einer laufenden Saison kann die Tabelle minimal verzögert aktualisiert werden (Editoren pflegen i.d.R. innerhalb von Stunden nach).
 - **Resultate:** Der TheSportsDB-Test-Key `123` deckelt vergangene Spiele auf wenige Datensätze (oft nur 1–2). Mehr gäbe es mit einem TheSportsDB-**Premium-Key** — dann nur `API_KEY` in [`index.html`](index.html) ersetzen.
+- **Nächstes Derby:** wird aus den nächsten angesetzten Spielen erkannt (Gegner = GC). Liegt das Derby weiter in der Zukunft, erscheint es, sobald es in den kommenden Spielen auftaucht.
+- **Aufstellung:** kommt aus `lookupevent.php` und wird nur angezeigt, wenn TheSportsDB für das Spiel Lineup-Daten hat — für die Super League ist das je nach Spiel lückenhaft.
+- **Highlights:** nutzt das hinterlegte Video, falls vorhanden; sonst öffnet der Link eine YouTube-Suche „Heim Gast Highlights".
 
 ## 🚀 Deployment
 
@@ -73,7 +79,8 @@ Bei jedem Push auf `main` lädt der Workflow ([`deploy.yml`](.github/workflows/d
 - **PWA** — Manifest + Service Worker zum „Installieren"
 - **Cup-Spiele** — Schweizer Cup neben der Liga
 - **Auto-Refresh** — alle paar Minuten automatisch neu laden
-- **Spielerstatistiken** — Topscorer via `lookup_all_players.php`
+- **Topscorer** — Torschützenliste (zuverlässig mit TheSportsDB-Premium-Key)
+- **Volle Aufstellungs-Historie** — Lineups aller Spiele (Premium-Key erweitert die Datenlage)
 
 ## 📄 Lizenz / Daten
 
