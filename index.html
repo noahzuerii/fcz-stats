@@ -3,28 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FCZ Matchday — Live Dashboard</title>
-<meta name="description" content="Live-Dashboard für FC Zürich: nächstes Spiel, Form, Resultate und Tabelle.">
+<title>FC Zürich — Super League Dashboard</title>
+<meta name="description" content="Dashboard für den FC Zürich: nächstes Spiel, Zürcher Derby, Form, Resultate, Aufstellung und Tabelle der Super League.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #0a1826;
-    --bg-elevated: #122a44;
-    --bg-elevated-2: #16314f;
-    --blue: #6cace4;
-    --blue-bright: #8ecbff;
-    --blue-dim: #2f5878;
-    --amber: #f2c14e;
-    --white: #f5f7fa;
-    --muted: #8fa3bd;
-    --win: #5fae6b;
-    --draw: #d9b44a;
-    --loss: #d9534f;
-    --radius: 16px;
-    --shadow: 0 10px 30px -12px rgba(0,0,0,0.55);
-    --ring: rgba(108,172,228,0.35);
+    --bg:            #0c1116;
+    --surface:       #141b22;
+    --surface-2:     #1a222b;
+    --border:        #222c36;
+    --border-strong: #2f3d4a;
+
+    --text:          #e6edf3;
+    --text-muted:    #8b98a6;
+    --text-faint:    #64707d;
+
+    --accent:        #4a8fd4;
+    --accent-bright: #6ba7e6;
+    --accent-soft:   rgba(74,143,212,0.10);
+
+    --win:  #3f9e56;
+    --draw: #9a8434;
+    --loss: #bf4340;
+
+    --radius:    10px;
+    --radius-sm: 6px;
   }
 
   *{ box-sizing: border-box; }
@@ -32,530 +37,424 @@
 
   body{
     background: var(--bg);
-    color: var(--white);
-    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
     min-height: 100vh;
-    position: relative;
-    overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
+    font-variant-numeric: tabular-nums;
   }
 
-  /* ambient floodlight glow + pitch gradient, decorative only */
-  .stadium-glow{
-    position: fixed;
-    top: -32vh;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 150vw;
-    height: 80vh;
-    background:
-      radial-gradient(ellipse at center, rgba(142,203,255,0.20) 0%, rgba(108,172,228,0.06) 42%, transparent 72%);
-    pointer-events: none;
-    z-index: 0;
-    animation: floodPulse 7s ease-in-out infinite;
-  }
-  .stadium-glow::after{
+  /* dezenter, statischer Verlauf im Kopfbereich — kein Blinken */
+  body::before{
     content: "";
     position: fixed;
-    inset: 0;
-    background: radial-gradient(ellipse 90% 60% at 50% 120%, rgba(95,174,107,0.10) 0%, transparent 60%);
+    top: 0; left: 0; right: 0;
+    height: 320px;
+    background: linear-gradient(180deg, rgba(74,143,212,0.07) 0%, transparent 100%);
     pointer-events: none;
-  }
-  @keyframes floodPulse{
-    0%, 100%{ opacity: 0.85; }
-    50%{ opacity: 1; }
+    z-index: 0;
   }
 
-  /* staggered entrance */
-  @keyframes fadeUp{
-    from{ opacity: 0; transform: translateY(14px); }
-    to{ opacity: 1; transform: translateY(0); }
-  }
-  main section, header.topbar{
-    animation: fadeUp 0.5s cubic-bezier(.2,.7,.3,1) both;
-  }
-  header.topbar{ animation-delay: 0s; }
-  #heroSection{ animation-delay: 0.05s; }
-  #derbySection{ animation-delay: 0.10s; }
-  #formSection{ animation-delay: 0.15s; }
-  #statsSection{ animation-delay: 0.20s; }
-  #resultsSection{ animation-delay: 0.25s; }
-  #lineupSection{ animation-delay: 0.30s; }
-  #tableSection{ animation-delay: 0.35s; }
-
-  /* ---- OneFootball-Style Motion ---- */
-  @keyframes popIn{
-    from{ opacity: 0; transform: translateY(12px) scale(0.96); }
-    to{ opacity: 1; transform: none; }
-  }
-  @keyframes badgePop{
-    0%{ opacity: 0; transform: scale(0.4) rotate(-8deg); }
-    60%{ transform: scale(1.12) rotate(0); }
-    100%{ opacity: 1; transform: scale(1); }
-  }
-  @keyframes slideIn{
-    from{ opacity: 0; transform: translateX(-10px); }
-    to{ opacity: 1; transform: none; }
-  }
-  @keyframes pulseGlow{
-    0%, 100%{ box-shadow: 0 0 0 0 rgba(242,193,78,0.55); }
-    50%{ box-shadow: 0 0 0 7px rgba(242,193,78,0); }
-  }
-  @keyframes sweepBar{
-    0%{ background-position: 200% 0; }
-    100%{ background-position: -200% 0; }
-  }
-  @keyframes digitPop{
-    0%{ transform: scale(1.16); color: var(--blue-bright); }
-    100%{ transform: scale(1); }
-  }
-  @keyframes shimmer{
-    0%{ background-position: -200% 0; }
-    100%{ background-position: 200% 0; }
-  }
-  .skeleton{
-    display: inline-block;
-    border-radius: 8px;
-    background: linear-gradient(90deg, var(--bg-elevated-2) 25%, rgba(108,172,228,0.18) 37%, var(--bg-elevated-2) 63%);
-    background-size: 200% 100%;
-    animation: shimmer 1.4s ease-in-out infinite;
-    color: transparent;
-  }
-
-  header.topbar{
+  .wrap{
     position: relative;
     z-index: 1;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  a{ color: var(--accent); }
+
+  /* ---------- Kopfzeile ---------- */
+  header.topbar{
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 22px 24px;
-    max-width: 720px;
-    margin: 0 auto;
+    gap: 16px;
+    padding: 20px 0 18px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
   }
-
-  .brand{ display:flex; align-items:center; gap:12px; }
-  .crest{
-    width: 38px; height: 38px;
-    object-fit: contain;
-    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
-    animation: fadeUp 0.4s ease both;
-  }
-  .brand-text{ display:flex; align-items:baseline; gap:10px; }
+  .brand{ display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .crest{ width: 34px; height: 34px; object-fit: contain; flex-shrink: 0; }
+  .brand-text{ display: flex; flex-direction: column; min-width: 0; }
   .brand-mark{
-    font-family: 'Big Shoulders Display', sans-serif;
-    font-weight: 800;
-    font-size: 30px;
-    letter-spacing: 1px;
-    background: linear-gradient(180deg, var(--blue-bright), var(--blue));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    line-height: 1.2;
   }
   .brand-sub{
-    font-size: 13px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-  }
-
-  .refresh-btn{
-    background: var(--bg-elevated);
-    border: 1px solid var(--blue-dim);
-    color: var(--white);
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 9px 16px;
-    border-radius: 999px;
-    cursor: pointer;
-    transition: background 0.2s, border-color 0.2s, transform 0.1s, box-shadow 0.2s;
-  }
-  .refresh-btn:hover{ background: var(--bg-elevated-2); border-color: var(--blue); box-shadow: 0 0 0 4px var(--ring); }
-  .refresh-btn:active{ transform: scale(0.96); }
-  .refresh-btn:focus-visible{ outline: 2px solid var(--amber); outline-offset: 2px; }
-  .refresh-btn[disabled]{ opacity: 0.5; cursor: default; box-shadow: none; }
-
-  main{
-    position: relative;
-    z-index: 1;
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 0 24px 60px;
-  }
-
-  .eyebrow{
     font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 1.8px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin: 0 0 14px;
+    color: var(--text-muted);
+    letter-spacing: 0.2px;
+  }
+
+  .topbar-actions{ display: flex; align-items: center; gap: 14px; }
+  .updated{
+    font-size: 12px;
+    color: var(--text-faint);
+    white-space: nowrap;
+  }
+  .refresh-btn{
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .refresh-btn:hover:not([disabled]){ background: var(--surface-2); border-color: var(--accent); }
+  .refresh-btn:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+  .refresh-btn[disabled]{ opacity: 0.55; cursor: default; }
+
+  /* ---------- Abschnitte ---------- */
+  main{ padding-bottom: 56px; }
+  section{ margin-top: 34px; }
+
+  .section-head{
     display: flex;
-    align-items: center;
-    gap: 9px;
-  }
-  .eyebrow::before{
-    content: "";
-    width: 18px; height: 3px;
-    border-radius: 2px;
-    background: linear-gradient(90deg, var(--blue), transparent);
-  }
-
-  section{ margin-top: 38px; }
-
-  /* HERO / SCOREBOARD */
-  .hero{
-    position: relative;
-    background:
-      radial-gradient(120% 100% at 50% 0%, rgba(108,172,228,0.14) 0%, transparent 55%),
-      linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-elevated-2) 100%);
-    border: 1px solid var(--blue-dim);
-    border-radius: var(--radius);
-    padding: 30px 24px 26px;
-    text-align: center;
-    box-shadow: var(--shadow);
-    overflow: hidden;
-  }
-  .hero::before{
-    content: "";
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, var(--blue-bright), var(--amber), transparent);
-    background-size: 200% 100%;
-    animation: sweepBar 4s linear infinite;
-    opacity: 0.85;
-  }
-
-  .matchup{
-    font-family: 'Big Shoulders Display', sans-serif;
-    font-weight: 800;
-    font-size: clamp(28px, 7vw, 42px);
-    line-height: 1.1;
-    letter-spacing: 0.5px;
-    margin: 4px 0 22px;
-  }
-  .matchup .vs{
-    color: var(--muted);
-    font-size: 0.55em;
-    margin: 0 10px;
-    font-weight: 600;
-  }
-  .matchup .fcz{ color: var(--blue-bright); text-shadow: 0 0 22px rgba(142,203,255,0.35); }
-
-  .countdown{
-    display: flex;
-    justify-content: center;
+    align-items: baseline;
+    justify-content: space-between;
     gap: 12px;
-    margin: 0 0 18px;
+    margin: 0 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
   }
-  .clock-unit{
-    background: rgba(0,0,0,0.28);
-    border: 1px solid var(--blue-dim);
-    border-radius: 12px;
-    padding: 12px 4px;
-    min-width: 66px;
-    transition: border-color 0.3s;
-  }
-  .clock-unit:hover{ border-color: var(--blue); }
-  .clock-unit span{
-    display: block;
-    font-family: 'Space Mono', monospace;
-    font-weight: 700;
-    font-size: 28px;
-    color: var(--amber);
-    font-variant-numeric: tabular-nums;
-    text-shadow: 0 0 18px rgba(242,193,78,0.35);
-  }
-  .clock-unit span.pulse{ animation: digitPop 0.5s ease; }
-  .clock-unit label{
-    display: block;
-    font-size: 10px;
-    letter-spacing: 1px;
-    color: var(--muted);
+  .section-head h2{
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.9px;
     text-transform: uppercase;
-    margin-top: 4px;
-  }
-
-  .venue{
-    color: var(--muted);
-    font-size: 14px;
+    color: var(--text-muted);
     margin: 0;
+  }
+  .section-head .aside{
+    font-size: 12px;
+    color: var(--text-faint);
   }
 
   .empty-state{
-    color: var(--muted);
+    color: var(--text-muted);
     font-size: 14px;
-    padding: 6px 0;
+    margin: 0;
   }
-
   .note{
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.5;
-    margin: 11px 2px 0;
-    font-style: italic;
+    color: var(--text-faint);
+    font-size: 12.5px;
+    line-height: 1.55;
+    margin: 10px 0 0;
   }
-  .note a{ color: var(--blue); text-decoration: none; font-style: normal; }
-  .note a:hover{ color: var(--blue-bright); text-decoration: underline; }
 
-  /* SEASON STATS */
-  .stats-grid{
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 10px;
+  /* ruhiger Ladezustand statt Shimmer */
+  .skeleton{
+    display: inline-block;
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    color: transparent;
+    animation: skelFade 1.6s ease-in-out infinite;
   }
-  .stat-card{
-    background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-elevated-2) 100%);
-    border: 1px solid var(--blue-dim);
-    border-radius: 14px;
-    padding: 16px 16px 14px;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s;
-    animation: popIn 0.5s cubic-bezier(.2,.7,.3,1) both;
-    animation-delay: calc(var(--i, 0) * 0.07s + 0.05s);
+  @keyframes skelFade{ 0%,100%{ opacity: 1; } 50%{ opacity: 0.55; } }
+
+  /* ---------- Nächstes Spiel ---------- */
+  .fixture{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
   }
-  .stat-card:hover{
-    transform: translateY(-3px);
-    border-color: var(--blue);
-    box-shadow: 0 12px 26px -16px rgba(0,0,0,0.7);
+  .fixture-meta{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    flex-wrap: wrap;
   }
-  .stat-card::before{
-    content: "";
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 2px;
-    background: linear-gradient(90deg, var(--blue-bright), transparent);
-    opacity: 0.7;
-    z-index: 1;
-  }
-  /* diagonaler Glanz-Sweep beim Hover */
-  .stat-card::after{
-    content: "";
-    position: absolute;
-    top: 0; left: -75%;
-    width: 50%; height: 100%;
-    transform: skewX(-20deg);
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
-    transition: left 0.6s ease;
-    pointer-events: none;
-  }
-  .stat-card:hover::after{ left: 130%; }
-  .stat-card .stat-label{
+  .fixture-meta .dot{ color: var(--border-strong); }
+  .tag{
+    display: inline-block;
     font-size: 11px;
-    letter-spacing: 1px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
-    color: var(--muted);
-    margin: 0 0 8px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    border: 1px solid var(--border-strong);
+    color: var(--text-muted);
   }
-  .stat-card .stat-value{
-    font-family: 'Space Mono', monospace;
-    font-weight: 700;
-    font-size: 28px;
-    color: var(--white);
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
+  .tag.home{ color: var(--accent-bright); border-color: rgba(74,143,212,0.45); }
+
+  /* Trenner zwischen Heim- und Auswärtsteam, überall gleich */
+  .sep{ color: var(--text-faint); font-weight: 400; margin: 0 6px; }
+  .fcz{ color: var(--accent-bright); }
+
+  .matchup{
+    font-size: clamp(21px, 4.4vw, 27px);
+    font-weight: 600;
+    letter-spacing: -0.4px;
+    line-height: 1.28;
+    margin: 0 0 6px;
   }
-  .stat-card .stat-value.accent{ color: var(--amber); text-shadow: 0 0 18px rgba(242,193,78,0.3); }
-  .stat-card .stat-value.good{ color: var(--win); }
-  .stat-card .stat-value.bad{ color: var(--loss); }
-  .stat-card .stat-sub{
-    font-size: 12px;
-    color: var(--muted);
-    margin: 7px 0 0;
+  .matchup .sep{ margin: 0 9px; }
+
+  .kickoff{
+    color: var(--text-muted);
+    font-size: 13.5px;
+    margin: 0;
   }
 
-  /* FORM STREAK */
+  .countdown{
+    display: flex;
+    gap: 26px;
+    margin: 20px 0 0;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+  }
+  .clock-unit{ display: flex; flex-direction: column; gap: 3px; }
+  .clock-unit span{
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.5px;
+  }
+  .clock-unit label{
+    font-size: 10.5px;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+
+  /* ---------- Derby ---------- */
+  .derby-card{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+  }
+  .derby-match{
+    font-size: clamp(17px, 3.6vw, 21px);
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    margin: 0 0 6px;
+  }
+  .derby-match .sep{ margin: 0 8px; }
+  .derby-meta{ color: var(--text-muted); font-size: 13.5px; margin: 0; }
+  .derby-meta .lead{ color: var(--text); font-weight: 600; }
+
+  /* ---------- Form ---------- */
   .form-row{
     display: flex;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
     align-items: center;
   }
   .form-badge{
-    width: 34px; height: 34px;
-    border-radius: 9px;
+    width: 28px; height: 28px;
+    border-radius: var(--radius-sm);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Big Shoulders Display', sans-serif;
-    font-weight: 800;
-    font-size: 17px;
-    color: var(--white);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
-    transition: transform 0.15s;
-  }
-  .form-badge:hover{ transform: scale(1.12); }
-  .form-row .form-badge{
-    animation: badgePop 0.45s cubic-bezier(.2,.8,.3,1.2) both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 0.1s);
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #fff;
   }
   .form-badge.w{ background: var(--win); }
-  .form-badge.d{ background: var(--draw); color: #2a2410; }
+  .form-badge.d{ background: var(--draw); }
   .form-badge.l{ background: var(--loss); }
   .form-meta{
-    color: var(--muted);
+    color: var(--text-muted);
     font-size: 13px;
-    margin-left: 6px;
+    margin-left: 8px;
   }
 
-  /* NEXT DERBY */
-  .derby-card{
-    position: relative;
-    background:
-      radial-gradient(120% 100% at 50% 0%, rgba(242,193,78,0.14) 0%, transparent 55%),
-      linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-elevated-2) 100%);
-    border: 1px solid var(--amber);
+  /* ---------- Saison-Statistik ---------- */
+  /* Eigene Rahmen statt 1px-Gap-Trick: eine unvollständige letzte Reihe
+     hinterlässt so keine grauen Leerflächen. */
+  .stats-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+    gap: 8px;
+  }
+  .stat-card{
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 20px 22px;
-    box-shadow: var(--shadow);
-    overflow: hidden;
+    padding: 15px 16px;
   }
-  .derby-card::before{
-    content: "";
-    position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, transparent, var(--amber), transparent);
-    background-size: 200% 100%;
-    animation: sweepBar 3.5s linear infinite;
+  .stat-card .stat-label{
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 7px;
   }
-  .derby-tag{
-    display: inline-block;
-    font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
-    color: #2a2410; background: var(--amber);
-    padding: 3px 11px; border-radius: 999px; margin-bottom: 11px;
-    animation: pulseGlow 2s ease-in-out infinite;
+  .stat-card .stat-value{
+    font-size: 23px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.5px;
+    margin: 0;
   }
-  .derby-match{
-    font-family: 'Big Shoulders Display', sans-serif; font-weight: 800;
-    font-size: clamp(20px, 5.5vw, 30px); line-height: 1.12; margin: 0 0 9px;
+  .stat-card .stat-value.good{ color: var(--win); }
+  .stat-card .stat-value.bad{ color: var(--loss); }
+  .stat-card .stat-sub{
+    font-size: 12px;
+    color: var(--text-faint);
+    margin: 6px 0 0;
   }
-  .derby-match .fcz{ color: var(--blue-bright); }
-  .derby-match .vs{ color: var(--muted); font-size: 0.6em; margin: 0 8px; }
-  .derby-meta{ color: var(--muted); font-size: 14px; margin: 0; }
-  .derby-meta strong{ color: var(--amber); font-family: 'Space Mono', monospace; }
 
-  /* LINEUP */
-  .lineup-wrap{
-    background: var(--bg-elevated);
-    border: 1px solid var(--blue-dim);
-    border-radius: var(--radius);
-    padding: 18px 20px 14px;
-    box-shadow: var(--shadow);
-  }
-  .lineup-head{
-    display: flex; align-items: baseline; justify-content: space-between;
-    gap: 12px; margin-bottom: 15px; flex-wrap: wrap;
-  }
-  .lineup-head .lu-match{ font-weight: 600; font-size: 14px; }
-  .lineup-head .lu-formation{
-    font-family: 'Space Mono', monospace; font-weight: 700; color: var(--amber);
-    font-size: 18px; letter-spacing: 1px;
-  }
-  .lineup-line{ margin: 0 0 13px; }
-  .lineup-line .lu-role{
-    font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
-    color: var(--muted); margin: 0 0 6px;
-  }
-  .lineup-line .lu-players{ display: flex; flex-wrap: wrap; gap: 6px; }
-  .lu-player{
-    background: var(--bg-elevated-2); border: 1px solid var(--blue-dim);
-    border-radius: 8px; padding: 5px 10px; font-size: 13px;
-    transition: border-color 0.2s, transform 0.12s;
-  }
-  .lu-player:hover{ border-color: var(--blue); transform: translateY(-2px); }
-  .lu-player.gk{ border-color: var(--amber); }
-
-  /* RESULTS LIST */
-  .res-yt{
-    display: inline-block;
-    color: var(--loss); font-size: 12px; font-weight: 600;
-    text-decoration: none; white-space: nowrap; margin-top: 4px;
-  }
-  .res-yt:hover{ text-decoration: underline; color: #ff6b66; }
+  /* ---------- Resultate ---------- */
   .result-list{
     list-style: none;
     margin: 0;
     padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
   }
   .result-list li{
-    background: var(--bg-elevated);
-    border: 1px solid var(--blue-dim);
-    border-radius: 12px;
-    padding: 13px 16px;
-    display: flex;
+    background: var(--surface);
+    padding: 12px 16px;
+    display: grid;
+    grid-template-columns: 52px 1fr auto auto;
     align-items: center;
-    justify-content: space-between;
+    gap: 14px;
     font-size: 14px;
-    gap: 12px;
-    transition: transform 0.15s, border-color 0.2s, background 0.2s;
-    animation: slideIn 0.4s ease both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 0.05s);
   }
-  .result-list li:hover{
-    transform: translateX(3px);
-    border-color: var(--blue);
-    background: var(--bg-elevated-2);
-  }
-  .result-list .res-teams{ flex: 1; }
-  .result-list .res-score{
-    font-family: 'Space Mono', monospace;
+  .result-list li + li{ border-top: 1px solid var(--border); }
+  .res-date{ color: var(--text-faint); font-size: 12.5px; }
+  .res-teams{ min-width: 0; }
+  .res-teams .fcz{ font-weight: 600; }
+  .res-score{ font-weight: 600; font-size: 14.5px; white-space: nowrap; }
+  .res-outcome{
+    width: 20px; height: 20px;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10.5px;
     font-weight: 700;
-    color: var(--amber);
-    font-size: 16px;
+    color: #fff;
   }
-  .result-list .res-date{
-    color: var(--muted);
+  .res-outcome.w{ background: var(--win); }
+  .res-outcome.d{ background: var(--draw); }
+  .res-outcome.l{ background: var(--loss); }
+  .res-yt{
+    display: inline-block;
+    color: var(--text-faint);
     font-size: 12px;
-    min-width: 64px;
-    text-align: right;
+    text-decoration: none;
+    margin-top: 2px;
+  }
+  .res-yt:hover{ color: var(--accent); text-decoration: underline; }
+
+  /* ---------- Aufstellung ---------- */
+  .lineup-wrap{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+  .lineup-head{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .lineup-head .lu-match{ font-size: 13.5px; color: var(--text-muted); }
+  .lineup-head .lu-formation{
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .lineup-line{ margin: 0 0 14px; }
+  .lineup-line:last-child{ margin-bottom: 0; }
+  .lineup-line .lu-role{
+    font-size: 10.5px;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin: 0 0 7px;
+  }
+  .lineup-line .lu-players{ display: flex; flex-wrap: wrap; gap: 6px; }
+  .lu-player{
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 4px 9px;
+    font-size: 12.5px;
   }
 
-  /* TABLE */
-  .table-wrap{ overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--blue-dim); box-shadow: var(--shadow); }
+  /* ---------- Tabelle ---------- */
+  .table-wrap{
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
   table{
     width: 100%;
     border-collapse: collapse;
-    font-size: 13px;
-    background: var(--bg-elevated);
+    font-size: 13.5px;
+    background: var(--surface);
   }
   th, td{
-    padding: 11px 8px;
-    text-align: center;
+    padding: 10px 8px;
+    text-align: right;
     white-space: nowrap;
   }
   th{
-    font-size: 11px;
-    letter-spacing: 0.5px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
     text-transform: uppercase;
-    color: var(--muted);
-    background: rgba(0,0,0,0.2);
-    border-bottom: 1px solid var(--blue-dim);
+    color: var(--text-faint);
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
   }
-  td.team-name{ text-align: left; font-weight: 600; }
-  tbody tr{ transition: background 0.15s; }
-  tbody tr:hover{ background: rgba(108,172,228,0.07); }
-  tr.fcz-row{ background: rgba(108,172,228,0.16); box-shadow: inset 3px 0 0 var(--blue-bright); }
-  tr.fcz-row:hover{ background: rgba(108,172,228,0.22); }
-  tr.fcz-row td{ color: var(--white); font-weight: 700; }
-  tr:not(:last-child) td{ border-bottom: 1px solid rgba(47,88,120,0.4); }
+  th.rank, td.rank{ text-align: right; width: 34px; padding-left: 14px; color: var(--text-muted); }
+  th.team-name, td.team-name{ text-align: left; width: 100%; }
+  td.team-name{ font-weight: 500; }
+  td.pts{ font-weight: 700; padding-right: 14px; }
+  th.pts{ padding-right: 14px; }
+  tbody tr + tr td{ border-top: 1px solid var(--border); }
+  tbody tr:hover{ background: var(--surface-2); }
+  tr.fcz-row{ background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
+  tr.fcz-row:hover{ background: rgba(74,143,212,0.16); }
+  tr.fcz-row td{ color: var(--text); }
+  tr.fcz-row td.team-name{ font-weight: 700; }
+  tr.fcz-row td.rank{ color: var(--text); }
 
+  /* ---------- Fusszeile ---------- */
   footer{
     position: relative;
     z-index: 1;
-    text-align: center;
-    color: var(--muted);
+    color: var(--text-faint);
     font-size: 12px;
-    padding: 24px;
-    margin: 12px auto 0;
-    max-width: 720px;
-    border-top: 1px solid rgba(47,88,120,0.4);
+    line-height: 1.7;
+    padding: 20px 0 32px;
+    border-top: 1px solid var(--border);
   }
-  footer a{ color: var(--blue); text-decoration: none; }
-  footer a:hover{ color: var(--blue-bright); text-decoration: underline; }
+  footer a{ color: var(--text-muted); text-decoration: none; }
+  footer a:hover{ color: var(--accent); text-decoration: underline; }
+
+  @media (max-width: 520px){
+    .result-list li{ grid-template-columns: 46px 1fr auto; row-gap: 4px; }
+    .res-outcome{ display: none; }
+    .countdown{ gap: 18px; }
+  }
 
   @media (prefers-reduced-motion: reduce){
     *{ transition: none !important; animation: none !important; }
@@ -564,131 +463,260 @@
 </head>
 <body>
 
-<div class="stadium-glow" aria-hidden="true"></div>
-
-<header class="topbar">
-  <div class="brand">
-    <img class="crest" id="crest" alt="FC Zürich Wappen" hidden>
-    <span class="brand-text">
-      <span class="brand-mark">FCZ</span>
-      <span class="brand-sub">Super League Tracker</span>
-    </span>
-  </div>
-  <button class="refresh-btn" id="refreshBtn">Aktualisieren</button>
-</header>
-
-<main>
-
-  <section class="hero" id="heroSection">
-    <p class="eyebrow">Nächstes Spiel</p>
-    <div class="matchup" id="matchup"><span class="skeleton" style="width:70%;">FCZ vs …</span></div>
-    <div class="countdown" id="countdown" hidden>
-      <div class="clock-unit"><span id="cd-d">--</span><label>Tage</label></div>
-      <div class="clock-unit"><span id="cd-h">--</span><label>Std</label></div>
-      <div class="clock-unit"><span id="cd-m">--</span><label>Min</label></div>
-      <div class="clock-unit"><span id="cd-s">--</span><label>Sek</label></div>
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand">
+      <img class="crest" id="crest" alt="" hidden>
+      <span class="brand-text">
+        <span class="brand-mark">FC Zürich</span>
+        <span class="brand-sub">Super League &middot; Saison <span id="seasonLabel">—</span></span>
+      </span>
     </div>
-    <p class="venue" id="venue"></p>
-  </section>
+    <div class="topbar-actions">
+      <span class="updated" id="updated"></span>
+      <button class="refresh-btn" id="refreshBtn">Aktualisieren</button>
+    </div>
+  </header>
 
-  <section id="derbySection" hidden>
-    <p class="eyebrow">Nächstes Derby</p>
-    <div id="derbyBody"></div>
-  </section>
+  <main>
 
-  <section id="formSection" hidden>
-    <p class="eyebrow">Form (letzte Spiele)</p>
-    <div class="form-row" id="formRow"></div>
-  </section>
-
-  <section id="statsSection" hidden>
-    <p class="eyebrow">Saison-Statistik</p>
-    <div class="stats-grid" id="statsGrid"></div>
-  </section>
-
-  <section id="resultsSection">
-    <p class="eyebrow">Letzte Resultate</p>
-    <ul class="result-list" id="resultList">
-      <li><span class="skeleton" style="width:55%;">Team – Team</span><span class="skeleton" style="width:40px;">0:0</span></li>
-      <li><span class="skeleton" style="width:48%;">Team – Team</span><span class="skeleton" style="width:40px;">0:0</span></li>
-      <li><span class="skeleton" style="width:60%;">Team – Team</span><span class="skeleton" style="width:40px;">0:0</span></li>
-    </ul>
-  </section>
-
-  <section id="lineupSection" hidden>
-    <p class="eyebrow">Aufstellung (letztes Spiel)</p>
-    <div class="lineup-wrap" id="lineupWrap"></div>
-  </section>
-
-  <section id="tableSection">
-    <p class="eyebrow" id="tableEyebrow">Tabelle</p>
-    <div class="table-wrap" id="tableWrap">
-      <div style="padding:16px; display:flex; flex-direction:column; gap:9px;">
-        <span class="skeleton" style="width:100%; height:18px;">.</span>
-        <span class="skeleton" style="width:92%; height:18px;">.</span>
-        <span class="skeleton" style="width:96%; height:18px;">.</span>
-        <span class="skeleton" style="width:88%; height:18px;">.</span>
+    <section id="heroSection">
+      <div class="section-head">
+        <h2>Nächstes Spiel</h2>
+        <span class="aside" id="heroAside"></span>
       </div>
-    </div>
-    <p class="note" id="tableNote" hidden></p>
-  </section>
+      <div class="fixture" id="fixtureCard">
+        <div class="matchup" id="matchup"><span class="skeleton" style="width:60%;">&nbsp;</span></div>
+        <p class="kickoff" id="kickoff"><span class="skeleton" style="width:38%;">&nbsp;</span></p>
+        <div class="countdown" id="countdown" hidden>
+          <div class="clock-unit"><span id="cd-d">–</span><label>Tage</label></div>
+          <div class="clock-unit"><span id="cd-h">–</span><label>Std</label></div>
+          <div class="clock-unit"><span id="cd-m">–</span><label>Min</label></div>
+          <div class="clock-unit"><span id="cd-s">–</span><label>Sek</label></div>
+        </div>
+      </div>
+    </section>
 
-</main>
+    <section id="derbySection">
+      <div class="section-head">
+        <h2>Zürcher Derby</h2>
+        <span class="aside" id="derbyAside"></span>
+      </div>
+      <div id="derbyBody"><p class="empty-state"><span class="skeleton" style="width:44%;">&nbsp;</span></p></div>
+    </section>
 
-<footer>
-  <p>Spiele &amp; Form via <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> · Tabelle via <a href="https://de.wikipedia.org/wiki/Super_League_2025/26_(Schweiz)" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA) · gebaut von Noah</p>
-</footer>
+    <section id="formSection" hidden>
+      <div class="section-head">
+        <h2>Form</h2>
+        <span class="aside" id="formAside"></span>
+      </div>
+      <div class="form-row" id="formRow"></div>
+    </section>
+
+    <section id="statsSection" hidden>
+      <div class="section-head">
+        <h2>Saison-Statistik</h2>
+      </div>
+      <div class="stats-grid" id="statsGrid"></div>
+    </section>
+
+    <section id="resultsSection">
+      <div class="section-head">
+        <h2>Letzte Resultate</h2>
+      </div>
+      <ul class="result-list" id="resultList">
+        <li><span class="skeleton">&nbsp;</span><span class="skeleton" style="width:60%;">&nbsp;</span><span class="skeleton" style="width:32px;">&nbsp;</span><span></span></li>
+        <li><span class="skeleton">&nbsp;</span><span class="skeleton" style="width:52%;">&nbsp;</span><span class="skeleton" style="width:32px;">&nbsp;</span><span></span></li>
+        <li><span class="skeleton">&nbsp;</span><span class="skeleton" style="width:64%;">&nbsp;</span><span class="skeleton" style="width:32px;">&nbsp;</span><span></span></li>
+      </ul>
+    </section>
+
+    <section id="lineupSection" hidden>
+      <div class="section-head">
+        <h2>Aufstellung</h2>
+        <span class="aside">letztes Spiel</span>
+      </div>
+      <div class="lineup-wrap" id="lineupWrap"></div>
+    </section>
+
+    <section id="tableSection">
+      <div class="section-head">
+        <h2>Tabelle</h2>
+        <span class="aside" id="tableAside"></span>
+      </div>
+      <div class="table-wrap" id="tableWrap">
+        <div style="padding:14px; display:flex; flex-direction:column; gap:8px;">
+          <span class="skeleton" style="height:16px;">&nbsp;</span>
+          <span class="skeleton" style="height:16px; width:94%;">&nbsp;</span>
+          <span class="skeleton" style="height:16px; width:97%;">&nbsp;</span>
+          <span class="skeleton" style="height:16px; width:90%;">&nbsp;</span>
+        </div>
+      </div>
+      <p class="note" id="tableNote" hidden></p>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>
+      Spielplan, Resultate und Aufstellungen: <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> &middot;
+      Tabelle: <a href="https://de.wikipedia.org" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA)<br>
+      Inoffizielles Projekt ohne Verbindung zum FC Zürich. Alle Angaben ohne Gewähr.
+    </p>
+  </footer>
+</div>
 
 <script>
 (function(){
   "use strict";
 
-  // ---- Config ----
-  const API_KEY = "123"; // TheSportsDB public test key — used für Spiel/Form/Resultate
+  // ---- Konfiguration ----
+  const API_KEY = "123"; // öffentlicher Testkey von TheSportsDB
   const BASE = `https://www.thesportsdb.com/api/v1/json/${API_KEY}`;
   const TEAM_NAME_CANDIDATES = ["FC Zurich", "FC Zürich", "Zurich"];
-  // Zürcher Derby = FCZ gegen Grasshopper Club Zürich (GC)
-  const DERBY_RE = /grasshopper|\bgc\b/i;
-  // Wikipedia (de): kostenlos, ohne Key, CORS-fähig (origin=*) — liefert die
-  // VOLLE und KORREKTE 12er-Tabelle der Super League.
+  const SUPER_LEAGUE_ID = "4675";
   const WIKI_API = "https://de.wikipedia.org/w/api.php";
 
-  // ---- State ----
+  // Zürcher Derby = FCZ gegen Grasshopper Club Zürich
+  const DERBY_RE = /grasshopper|\bgc\b/i;
+  // Der Spielplan liegt rundenweise vor; so weit schauen wir maximal voraus.
+  const MAX_ROUNDS = 36;
+  const DERBY_SCAN_AHEAD = 22;
+  const ROUND_FETCH_DELAY = 120; // ms, um den öffentlichen Key nicht zu überlasten
+
+  // ---- Zustand ----
   let fczTeamId = null;
   let fczLeagueId = null;
-  let nextMatchTimestamp = null;
   let countdownTimer = null;
 
-  // ---- Helpers ----
-  function currentSeason(){
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = now.getMonth() + 1;
-    // Swiss Super League runs roughly July -> May
-    return m >= 7 ? `${y}-${y+1}` : `${y-1}-${y}`;
+  const $ = id => document.getElementById(id);
+
+  // ---- Hilfsfunktionen ----
+  function esc(s){
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
 
-  // Saison-Startjahr für OpenLigaDB (z.B. 2025 für die Saison 2025/26)
   function seasonStartYear(){
     const now = new Date();
     const y = now.getFullYear();
+    // Die Super League läuft von Juli bis Mai.
     return (now.getMonth() + 1) >= 7 ? y : y - 1;
   }
-
-  function isFczName(name){
-    // "FC Zürich" matchen, aber NICHT "Grasshopper Club Zürich"
-    return /\bfc\s*z(ü|ue|u)rich\b/i.test(name || "");
-  }
-
-  // Wikipedia-Artikeltitel für die laufende Saison, z.B. "Super League 2025/26 (Schweiz)"
-  function swissSeasonTitle(){
+  function currentSeason(){
     const y = seasonStartYear();
-    const yy = String((y + 1) % 100).padStart(2, "0");
-    return `Super League ${y}/${yy} (Schweiz)`;
+    return `${y}-${y + 1}`;
+  }
+  function seasonLabel(){
+    const y = seasonStartYear();
+    return `${y}/${String((y + 1) % 100).padStart(2, "0")}`;
+  }
+  function swissSeasonTitle(){
+    return `Super League ${seasonLabel()} (Schweiz)`;
   }
 
-  // Parst die {{Fußballtabelle/Zeile|…}}-Blöcke aus dem Wikitext.
-  // Nimmt die letzte vollständige (~12 Teams) Tabelle = finale/aktuelle Gesamttabelle.
+  // "Zürich", "FC Zürich", "FC Zurich" und "FCZ" gelten als FCZ —
+  // "Grasshopper Club Zürich" ausdrücklich nicht.
+  function isFczName(name){
+    const n = String(name || "").toLowerCase();
+    if (!n) return false;
+    if (DERBY_RE.test(n)) return false;
+    return /\bz(ü|ue|u)rich\b/.test(n) || /\bfcz\b/.test(n);
+  }
+  function isDerbyOpponent(name){
+    return DERBY_RE.test(String(name || ""));
+  }
+
+  // TheSportsDB liefert Anstosszeiten ohne Zeitzonen-Angabe
+  // ("2026-09-05T18:30:00"). Gemeint ist die Schweizer Ortszeit. Ohne
+  // Umrechnung würde ein Gerät im Ausland eine falsche Zeit und einen
+  // falschen Countdown anzeigen, darum rechnen wir explizit über Europe/Zurich.
+  const TZ = "Europe/Zurich";
+
+  // Verschiebung von Europe/Zurich gegenüber UTC zum gegebenen Zeitpunkt.
+  function tzOffsetMs(instant){
+    const dtf = new Intl.DateTimeFormat("en-US", {
+      timeZone: TZ, hour12: false,
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", second: "2-digit"
+    });
+    const p = dtf.formatToParts(instant).reduce((a, x) => (a[x.type] = x.value, a), {});
+    const asUtc = Date.UTC(+p.year, +p.month - 1, +p.day, (+p.hour) % 24, +p.minute, +p.second);
+    return asUtc - instant.getTime();
+  }
+
+  // Schweizer Wanduhrzeit -> echter Zeitpunkt (inkl. Sommerzeit).
+  function zurichWallToInstant(y, mo, d, h, mi, s){
+    const naive = Date.UTC(y, mo - 1, d, h, mi, s || 0);
+    let guess = naive;
+    // Zwei Durchgänge genügen auch direkt an den Zeitumstellungen.
+    for (let i = 0; i < 2; i++) guess = naive - tzOffsetMs(new Date(guess));
+    return new Date(guess);
+  }
+
+  function kickoffDate(ev){
+    if (!ev) return null;
+    const raw = ev.strTimestamp || `${ev.dateEvent}T${ev.strTime || "00:00:00"}`;
+    const m = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/.exec(String(raw));
+    if (m){
+      // Ohne Offset im String: als Schweizer Ortszeit lesen.
+      if (!/(Z|[+-]\d{2}:?\d{2})$/.test(String(raw).trim())){
+        return zurichWallToInstant(+m[1], +m[2], +m[3], +m[4], +m[5], +m[6] || 0);
+      }
+    }
+    const d = new Date(raw);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function fmtDateTime(d){
+    return d.toLocaleString("de-CH", {
+      weekday: "short", day: "2-digit", month: "long",
+      hour: "2-digit", minute: "2-digit", timeZone: TZ
+    });
+  }
+
+  // Kalendertag in Zürich, damit "heute"/"morgen" nicht am Gerät hängen.
+  function zurichDayNumber(d){
+    const p = new Intl.DateTimeFormat("en-CA", {
+      timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit"
+    }).formatToParts(d).reduce((a, x) => (a[x.type] = x.value, a), {});
+    return Date.UTC(+p.year, +p.month - 1, +p.day) / 86400000;
+  }
+
+  function relativeDays(d){
+    const days = zurichDayNumber(d) - zurichDayNumber(new Date());
+    if (days < 0) return null;
+    if (days === 0) return "heute";
+    if (days === 1) return "morgen";
+    if (days < 7) return `in ${days} Tagen`;
+    const weeks = Math.round(days / 7);
+    return weeks === 1 ? "in einer Woche" : `in ${weeks} Wochen`;
+  }
+
+  async function fetchJson(url){
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  }
+
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  // ---- kleiner localStorage-Cache, spart Anfragen an den Testkey ----
+  function cacheGet(key, maxAgeMs){
+    try{
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      const o = JSON.parse(raw);
+      if (!o || typeof o.t !== "number" || (Date.now() - o.t) > maxAgeMs) return null;
+      return o.v;
+    } catch(e){ return null; }
+  }
+  function cacheSet(key, value){
+    try{ localStorage.setItem(key, JSON.stringify({ t: Date.now(), v: value })); } catch(e){ /* Speicher voll o.ä. */ }
+  }
+
+  // ---- Tabelle aus dem Wikipedia-Wikitext ----
   function parseWikiTable(wikitext){
     const zeileRe = /\{\{Fußballtabelle\/Zeile\|([^}]*)\}\}/g;
     const tables = [];
@@ -723,235 +751,264 @@
     }).sort((a, b) => a.rank - b.rank);
   }
 
-  async function fetchJson(url){
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
-  }
-
-  function setEmpty(el, message){
-    el.innerHTML = `<span class="empty-state">${message}</span>`;
-  }
-
-  const prefersReducedMotion = () =>
-    window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  // Zählt eine Zahl animiert von 0 hoch (OneFootball-Style)
-  function animateCount(el, target, opts){
-    const { decimals = 0, prefix = "", suffix = "", duration = 900 } = opts || {};
-    const fmt = v => prefix + v.toFixed(decimals) + suffix;
-    if (prefersReducedMotion() || !Number.isFinite(target)){ el.textContent = fmt(target || 0); return; }
-    const start = performance.now();
-    function frame(now){
-      const t = Math.min(1, (now - start) / duration);
-      const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
-      el.textContent = fmt(target * eased);
-      if (t < 1) requestAnimationFrame(frame);
-      else el.textContent = fmt(target);
-    }
-    requestAnimationFrame(frame);
-  }
-
-  // ---- Step 1: find FCZ team + league id ----
+  // ---- Team suchen ----
   async function findFczTeam(){
     for (const name of TEAM_NAME_CANDIDATES){
       try{
         const data = await fetchJson(`${BASE}/searchteams.php?t=${encodeURIComponent(name)}`);
         const teams = data && data.teams;
         if (teams && teams.length){
-          const team = teams.find(t => /zur/i.test(t.strTeam)) || teams[0];
-          return team;
+          return teams.find(t => isFczName(t.strTeam)) || teams[0];
         }
-      } catch(e){ /* try next candidate */ }
+      } catch(e){ /* nächsten Namen probieren */ }
     }
     return null;
   }
 
-  // ---- Step 2: next match + countdown ----
-  function startCountdown(timestamp){
-    nextMatchTimestamp = new Date(timestamp);
-    const countdownEl = document.getElementById("countdown");
+  // ---- Countdown ----
+  function pad(n){ return String(n).padStart(2, "0"); }
+
+  function startCountdown(target){
+    const countdownEl = $("countdown");
     countdownEl.hidden = false;
 
     function tick(){
-      const diff = nextMatchTimestamp - new Date();
+      const diff = target - new Date();
       if (diff <= 0){
         clearInterval(countdownTimer);
-        document.getElementById("cd-d").textContent = "0";
-        document.getElementById("cd-h").textContent = "0";
-        document.getElementById("cd-m").textContent = "0";
-        document.getElementById("cd-s").textContent = "0";
+        countdownTimer = null;
+        ["cd-d","cd-h","cd-m","cd-s"].forEach(id => { $(id).textContent = "00"; });
         return;
       }
       const s = Math.floor(diff / 1000);
-      document.getElementById("cd-d").textContent = Math.floor(s / 86400);
-      document.getElementById("cd-h").textContent = Math.floor((s % 86400) / 3600);
-      document.getElementById("cd-m").textContent = Math.floor((s % 3600) / 60);
-      const secEl = document.getElementById("cd-s");
-      secEl.textContent = s % 60;
-      // Puls bei jedem Tick neu auslösen
-      secEl.classList.remove("pulse");
-      void secEl.offsetWidth;
-      secEl.classList.add("pulse");
+      $("cd-d").textContent = pad(Math.floor(s / 86400));
+      $("cd-h").textContent = pad(Math.floor((s % 86400) / 3600));
+      $("cd-m").textContent = pad(Math.floor((s % 3600) / 60));
+      $("cd-s").textContent = pad(s % 60);
     }
     tick();
     countdownTimer = setInterval(tick, 1000);
   }
 
+  // Baut "Heim – Auswärts" mit hervorgehobenem FCZ.
+  function matchupHtml(home, away){
+    const h = isFczName(home) ? `<span class="fcz">${esc(home)}</span>` : esc(home);
+    const a = isFczName(away) ? `<span class="fcz">${esc(away)}</span>` : esc(away);
+    return `${h}<span class="sep">–</span>${a}`;
+  }
+
+  // ---- Nächstes Spiel ----
   function renderNextMatch(event){
-    const matchupEl = document.getElementById("matchup");
-    const venueEl = document.getElementById("venue");
+    const matchupEl = $("matchup");
+    const kickoffEl = $("kickoff");
+    const asideEl = $("heroAside");
 
     if (!event){
-      matchupEl.innerHTML = `<span class="fcz">FCZ</span>`;
-      document.getElementById("countdown").hidden = true;
-      venueEl.innerHTML = `<span class="empty-state">Aktuell ist kein nächstes Spiel angesetzt — Sommerpause. Schau später nochmal vorbei.</span>`;
+      matchupEl.textContent = "Kein Spiel angesetzt";
+      kickoffEl.innerHTML = `<span class="empty-state">Zurzeit ist keine Partie terminiert. Sobald die nächste Runde angesetzt ist, erscheint sie hier.</span>`;
+      $("countdown").hidden = true;
+      asideEl.textContent = "";
       return;
     }
 
     const home = event.strHomeTeam;
     const away = event.strAwayTeam;
-    const isHome = /zur/i.test(home);
+    const fczIsHome = isFczName(home);
 
-    matchupEl.innerHTML = isHome
-      ? `<span class="fcz">${home}</span><span class="vs">vs</span>${away}`
-      : `${home}<span class="vs">@</span><span class="fcz">${away}</span>`;
+    matchupEl.innerHTML = matchupHtml(home, away);
 
-    const dateStr = new Date(event.strTimestamp || `${event.dateEvent}T${event.strTime || "00:00:00"}`)
-      .toLocaleString("de-CH", { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
-    venueEl.textContent = `${dateStr} · ${event.strVenue || "Ort folgt"}`;
+    const parts = [];
+    if (event.strLeague) parts.push(esc(event.strLeague));
+    if (event.intRound) parts.push(`Runde ${esc(event.intRound)}`);
+    asideEl.innerHTML = parts.join(" · ");
 
-    const timestamp = event.strTimestamp || `${event.dateEvent}T${event.strTime || "00:00:00"}`;
-    startCountdown(timestamp);
+    const when = kickoffDate(event);
+    const bits = [];
+    bits.push(`<span class="tag ${fczIsHome ? "home" : ""}">${fczIsHome ? "Heim" : "Auswärts"}</span>`);
+    if (when) bits.push(esc(fmtDateTime(when)));
+    if (event.strVenue) bits.push(esc(event.strVenue));
+    kickoffEl.innerHTML = bits.join(' <span class="dot">·</span> ');
+    kickoffEl.classList.add("fixture-meta");
+
+    if (when && when > new Date()) startCountdown(when);
+    else $("countdown").hidden = true;
   }
 
-  // ---- Nächstes Derby (FCZ vs. GC) aus den kommenden Spielen ----
-  function renderDerby(events){
-    const sectionEl = document.getElementById("derbySection");
-    const bodyEl = document.getElementById("derbyBody");
-    if (!events || !events.length){ sectionEl.hidden = true; return; }
+  // ---- Nächstes Derby ----
+  // Der Spielplan ist über eventsnext.php nur eine Partie weit sichtbar.
+  // Das Derby steht typischerweise mehrere Runden später an, deshalb gehen
+  // wir den Spielplan rundenweise durch — mit Cache, damit das nicht bei
+  // jedem Reload erneut passiert.
+  async function fetchRound(round, season){
+    const key = `fcz:round:${season}:${round}`;
+    const cached = cacheGet(key, 6 * 3600 * 1000);
+    if (cached) return cached;
+    const data = await fetchJson(`${BASE}/eventsround.php?id=${SUPER_LEAGUE_ID}&r=${round}&s=${season}`);
+    const events = (data && data.events) || [];
+    cacheSet(key, events);
+    return events;
+  }
 
-    // erstes kommendes Spiel, in dem der Gegner Grasshopper ist
-    const derby = events.find(ev => {
-      const fczHome = isFczName(ev.strHomeTeam);
-      const opp = fczHome ? ev.strAwayTeam : ev.strHomeTeam;
-      return (isFczName(ev.strHomeTeam) || isFczName(ev.strAwayTeam)) && DERBY_RE.test(opp || "");
-    });
+  function isFczDerby(ev){
+    const home = ev.strHomeTeam, away = ev.strAwayTeam;
+    return (isFczName(home) && isDerbyOpponent(away)) ||
+           (isFczName(away) && isDerbyOpponent(home));
+  }
 
-    if (!derby){
-      bodyEl.innerHTML = `<p class="empty-state">In den nächsten angesetzten Spielen ist kein Zürcher Derby dabei. Sobald GC auf dem Programm steht, taucht es hier auf.</p>`;
-      sectionEl.hidden = false;
+  // Startrunde: die Runde des nächsten FCZ-Spiels, sonst aus dem Datum geschätzt.
+  function estimateRound(nextEvent){
+    const r = nextEvent && parseInt(nextEvent.intRound, 10);
+    if (Number.isFinite(r) && r > 0) return Math.min(MAX_ROUNDS, r);
+    const start = new Date(seasonStartYear(), 6, 18); // ~18. Juli
+    const weeks = Math.floor((Date.now() - start) / (7 * 86400000));
+    return Math.min(MAX_ROUNDS, Math.max(1, weeks + 1));
+  }
+
+  async function findNextDerby(nextEvent){
+    const season = currentSeason();
+    const resultKey = `fcz:derby:${season}`;
+
+    const cached = cacheGet(resultKey, 12 * 3600 * 1000);
+    if (cached && cached.state === "found" && new Date(cached.derby.kickoff) > new Date()){
+      return cached;
+    }
+    if (cached && cached.state === "none") return cached;
+
+    const startRound = estimateRound(nextEvent);
+    const lastRound = Math.min(MAX_ROUNDS, startRound + DERBY_SCAN_AHEAD);
+    let scannedToEnd = true;
+
+    for (let r = startRound; r <= lastRound; r++){
+      let events;
+      try{
+        events = await fetchRound(r, season);
+      } catch(e){
+        try{
+          // Der öffentliche Testkey drosselt sporadisch — einmal nachfassen.
+          await sleep(800);
+          events = await fetchRound(r, season);
+        } catch(e2){
+          // Ratelimit oder Netzfehler: lieber ehrlich "unbekannt" melden,
+          // als fälschlich zu behaupten, es gebe kein Derby.
+          scannedToEnd = false;
+          break;
+        }
+      }
+      const derby = events
+        .filter(isFczDerby)
+        .map(ev => ({ ev, when: kickoffDate(ev) }))
+        .filter(x => x.when && x.when > new Date())
+        .sort((a, b) => a.when - b.when)[0];
+
+      if (derby){
+        const ev = derby.ev;
+        const result = {
+          state: "found",
+          derby: {
+            home: ev.strHomeTeam,
+            away: ev.strAwayTeam,
+            venue: ev.strVenue || "",
+            round: ev.intRound || String(r),
+            kickoff: derby.when.toISOString()
+          }
+        };
+        cacheSet(resultKey, result);
+        return result;
+      }
+      if (r < lastRound) await sleep(ROUND_FETCH_DELAY);
+    }
+
+    if (scannedToEnd && lastRound >= MAX_ROUNDS){
+      const result = { state: "none" };
+      cacheSet(resultKey, result);
+      return result;
+    }
+    return { state: scannedToEnd ? "none-in-window" : "unavailable", lastRound };
+  }
+
+  function renderDerby(result){
+    const bodyEl = $("derbyBody");
+    const asideEl = $("derbyAside");
+    asideEl.textContent = "";
+
+    if (!result || result.state === "unavailable"){
+      bodyEl.innerHTML = `<p class="empty-state">Der Spielplan liess sich gerade nicht abrufen. Bitte später erneut aktualisieren.</p>`;
+      return;
+    }
+    if (result.state === "none"){
+      bodyEl.innerHTML = `<p class="empty-state">In dieser Saison ist kein weiteres Zürcher Derby mehr angesetzt.</p>`;
+      return;
+    }
+    if (result.state === "none-in-window"){
+      bodyEl.innerHTML = `<p class="empty-state">In den nächsten ${esc(DERBY_SCAN_AHEAD)} Runden ist kein Derby angesetzt. Der weitere Spielplan ist noch nicht publiziert.</p>`;
       return;
     }
 
-    const home = derby.strHomeTeam, away = derby.strAwayTeam;
-    const isHome = isFczName(home);
-    const matchHtml = isHome
-      ? `<span class="fcz">${home}</span><span class="vs">vs</span>${away}`
-      : `${home}<span class="vs">@</span><span class="fcz">${away}</span>`;
+    const d = result.derby;
+    const when = new Date(d.kickoff);
+    const rel = relativeDays(when);
 
-    const ts = derby.strTimestamp || `${derby.dateEvent}T${derby.strTime || "00:00:00"}`;
-    const when = new Date(ts);
-    const dateStr = when.toLocaleString("de-CH", { weekday: "long", day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" });
-    const days = Math.max(0, Math.ceil((when - new Date()) / 86400000));
-    const daysStr = days === 0 ? "heute" : days === 1 ? "morgen" : `in ${days} Tagen`;
+    asideEl.textContent = d.round ? `Runde ${d.round}` : "";
+
+    // Kein Heim/Auswärts-Hinweis: FCZ und GC teilen sich das Letzigrund,
+    // die Unterscheidung sagt beim Derby nichts aus.
+    const meta = [];
+    if (rel) meta.push(`<span class="lead">${esc(rel)}</span>`);
+    meta.push(esc(fmtDateTime(when)));
+    if (d.venue) meta.push(esc(d.venue));
 
     bodyEl.innerHTML = `
       <div class="derby-card">
-        <span class="derby-tag">🔥 Zürcher Derby</span>
-        <p class="derby-match">${matchHtml}</p>
-        <p class="derby-meta"><strong>${daysStr}</strong> · ${dateStr} · ${derby.strVenue || "Ort folgt"}</p>
+        <p class="derby-match">${matchupHtml(d.home, d.away)}</p>
+        <p class="derby-meta">${meta.join(" · ")}</p>
       </div>`;
-    sectionEl.hidden = false;
   }
 
-  // ---- Step 3: last results (mit YouTube-Highlights) ----
-  function highlightUrl(ev){
-    // echtes Highlight-Video wenn TheSportsDB eines liefert, sonst YouTube-Suche
-    if (ev.strVideo && /youtu/i.test(ev.strVideo)) return ev.strVideo;
-    const q = `${ev.strHomeTeam} ${ev.strAwayTeam} Highlights`;
-    return `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
+  // ---- Gespielte Partien sammeln ----
+  // eventslast.php gibt mit dem öffentlichen Testkey nur eine einzige Partie
+  // zurück — für Form und Resultate zu wenig. Wir lesen darum die bereits
+  // gespielten Runden rückwärts nach; der Rundencache wird mit der
+  // Derby-Suche geteilt, kostet also oft gar keine zusätzliche Anfrage.
+  const RECENT_WANT = 5;
+  const RECENT_SCAN_BACK = 8;
+
+  function hasScore(ev){
+    return Number.isFinite(parseInt(ev.intHomeScore, 10)) &&
+           Number.isFinite(parseInt(ev.intAwayScore, 10));
   }
 
-  function renderResults(events){
-    const listEl = document.getElementById("resultList");
-    if (!events || !events.length){
-      listEl.innerHTML = `<li class="empty-state">Noch keine Resultate verfügbar.</li>`;
-      return;
+  function isFczMatch(ev){
+    return isFczName(ev.strHomeTeam) || isFczName(ev.strAwayTeam);
+  }
+
+  async function collectRecentMatches(nextEvent, seed){
+    const season = currentSeason();
+    const byId = new Map();
+    const add = ev => {
+      if (!ev || !ev.idEvent || !isFczMatch(ev) || !hasScore(ev)) return;
+      if (!byId.has(ev.idEvent)) byId.set(ev.idEvent, ev);
+    };
+    (seed || []).forEach(add);
+
+    const from = estimateRound(nextEvent) - 1;
+    const until = Math.max(1, from - RECENT_SCAN_BACK + 1);
+    for (let r = from; r >= until && byId.size < RECENT_WANT; r--){
+      let events;
+      try{
+        events = await fetchRound(r, season);
+      } catch(e){
+        break; // lieber weniger Partien zeigen als gar keine
+      }
+      events.forEach(add);
+      if (r > until) await sleep(ROUND_FETCH_DELAY);
     }
-    const sorted = [...events].sort((a,b) => new Date(b.dateEvent) - new Date(a.dateEvent));
-    listEl.innerHTML = sorted.map((ev, i) => {
-      const date = new Date(ev.dateEvent).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit" });
-      return `<li style="--i:${i}">
-        <span class="res-teams">${ev.strHomeTeam} – ${ev.strAwayTeam}<br>
-          <a class="res-yt" href="${highlightUrl(ev)}" target="_blank" rel="noopener">▶ Highlights</a>
-        </span>
-        <span class="res-score">${ev.intHomeScore} : ${ev.intAwayScore}</span>
-        <span class="res-date">${date}</span>
-      </li>`;
-    }).join("");
+
+    return [...byId.values()]
+      .sort((a, b) => kickoffDate(b) - kickoffDate(a))
+      .slice(0, RECENT_WANT);
   }
 
-  // ---- Aufstellung des letzten Spiels ----
-  function lineupPlayers(raw){
-    // TheSportsDB liefert Spieler ';'-separiert, teils mit Positions-Suffix
-    if (!raw) return [];
-    return raw.split(";").map(s => s.replace(/\s*\([^)]*\)\s*$/, "").trim()).filter(Boolean);
-  }
-
-  function renderLineup(ev){
-    const sectionEl = document.getElementById("lineupSection");
-    const wrapEl = document.getElementById("lineupWrap");
-    if (!ev){ sectionEl.hidden = true; return; }
-
-    const fczHome = isFczName(ev.strHomeTeam);
-    const fczAway = isFczName(ev.strAwayTeam);
-    if (!fczHome && !fczAway){ sectionEl.hidden = true; return; }
-    const side = fczHome ? "Home" : "Away";
-
-    const formation = ev[`str${side}Formation`];
-    const lines = [
-      { role: "Tor", players: lineupPlayers(ev[`str${side}LineupGoalkeeper`]), gk: true },
-      { role: "Abwehr", players: lineupPlayers(ev[`str${side}LineupDefense`]) },
-      { role: "Mittelfeld", players: lineupPlayers(ev[`str${side}LineupMidfield`]) },
-      { role: "Sturm", players: lineupPlayers(ev[`str${side}LineupForward`]) },
-      { role: "Ersatzbank", players: lineupPlayers(ev[`str${side}LineupSubstitutes`]) }
-    ];
-    const hasAny = lines.some(l => l.players.length);
-    if (!hasAny && !formation){ sectionEl.hidden = true; return; }
-
-    const oppName = fczHome ? ev.strAwayTeam : ev.strHomeTeam;
-    const scoreStr = (ev.intHomeScore != null && ev.intAwayScore != null)
-      ? ` (${ev.intHomeScore}:${ev.intAwayScore})` : "";
-    const linesHtml = lines.filter(l => l.players.length).map(l => `
-      <div class="lineup-line">
-        <p class="lu-role">${l.role}</p>
-        <div class="lu-players">
-          ${l.players.map(p => `<span class="lu-player${l.gk ? " gk" : ""}">${p}</span>`).join("")}
-        </div>
-      </div>`).join("");
-
-    wrapEl.innerHTML = `
-      <div class="lineup-head">
-        <span class="lu-match">FCZ vs. ${oppName}${scoreStr}</span>
-        ${formation ? `<span class="lu-formation">${formation}</span>` : ""}
-      </div>
-      ${linesHtml || `<p class="empty-state">Für dieses Spiel sind nur Formationsdaten verfügbar.</p>`}`;
-    sectionEl.hidden = false;
-  }
-
-  async function loadLineup(lastEvents){
-    if (!lastEvents || !lastEvents.length){ renderLineup(null); return; }
-    const recent = [...lastEvents].sort((a,b) => new Date(b.dateEvent) - new Date(a.dateEvent))[0];
-    if (!recent || !recent.idEvent){ renderLineup(null); return; }
-    try{
-      const data = await fetchJson(`${BASE}/lookupevent.php?id=${recent.idEvent}`);
-      renderLineup(data && data.events ? data.events[0] : null);
-    } catch(e){ renderLineup(null); }
-  }
-
-  // ---- Form aus den letzten Spielen (S/U/N) ----
-  // Bestimmt für jedes Spiel das FCZ-Ergebnis anhand der Tore und der Seite.
+  // ---- Resultate ----
   function fczOutcome(ev){
     const hs = parseInt(ev.intHomeScore, 10);
     const as = parseInt(ev.intAwayScore, 10);
@@ -964,13 +1021,46 @@
     return { res: gf > ga ? "w" : gf < ga ? "l" : "d", gf, ga };
   }
 
+  function highlightUrl(ev){
+    if (ev.strVideo && /youtu/i.test(ev.strVideo)) return ev.strVideo;
+    const q = `${ev.strHomeTeam} ${ev.strAwayTeam} Highlights`;
+    return `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
+  }
+
+  function renderResults(events){
+    const listEl = $("resultList");
+    if (!events || !events.length){
+      listEl.innerHTML = `<li style="display:block; padding:16px;"><span class="empty-state">Noch keine Resultate in dieser Saison.</span></li>`;
+      return;
+    }
+    const labels = { w: "S", d: "U", l: "N" };
+    const sorted = [...events].sort((a, b) => new Date(b.dateEvent) - new Date(a.dateEvent));
+
+    listEl.innerHTML = sorted.map(ev => {
+      const date = new Date(ev.dateEvent).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit" });
+      const o = fczOutcome(ev);
+      const badge = o ? `<span class="res-outcome ${o.res}" title="${labels[o.res]}">${labels[o.res]}</span>` : `<span></span>`;
+      const score = (ev.intHomeScore != null && ev.intAwayScore != null)
+        ? `${esc(ev.intHomeScore)}:${esc(ev.intAwayScore)}` : "–:–";
+      return `<li>
+        <span class="res-date">${esc(date)}</span>
+        <span class="res-teams">${matchupHtml(ev.strHomeTeam, ev.strAwayTeam)}<br>
+          <a class="res-yt" href="${esc(highlightUrl(ev))}" target="_blank" rel="noopener">Highlights ansehen</a>
+        </span>
+        <span class="res-score">${score}</span>
+        ${badge}
+      </li>`;
+    }).join("");
+  }
+
+  // ---- Form ----
   function renderForm(events){
-    const sectionEl = document.getElementById("formSection");
-    const rowEl = document.getElementById("formRow");
+    const sectionEl = $("formSection");
+    const rowEl = $("formRow");
+    const asideEl = $("formAside");
     if (!events || !events.length){ sectionEl.hidden = true; return; }
 
-    // älteste -> neueste, damit der jüngste Badge rechts steht
-    const sorted = [...events].sort((a,b) => new Date(a.dateEvent) - new Date(b.dateEvent));
+    const sorted = [...events].sort((a, b) => new Date(a.dateEvent) - new Date(b.dateEvent));
     const outcomes = sorted.map(fczOutcome).filter(Boolean);
     if (!outcomes.length){ sectionEl.hidden = true; return; }
 
@@ -980,157 +1070,219 @@
     const losses = outcomes.filter(o => o.res === "l").length;
     const pts = wins * 3 + draws;
 
-    const badges = outcomes.map((o, i) =>
-      `<span class="form-badge ${o.res}" style="--i:${i}" title="${o.gf}:${o.ga}">${labels[o.res]}</span>`
-    ).join("");
-    rowEl.innerHTML = badges +
-      `<span class="form-meta">${wins}S · ${draws}U · ${losses}N — ${pts} Pkt aus ${outcomes.length}</span>`;
+    asideEl.textContent = `letzte ${outcomes.length} ${outcomes.length === 1 ? "Partie" : "Partien"}`;
+    rowEl.innerHTML = outcomes.map(o =>
+      `<span class="form-badge ${o.res}" title="${o.gf}:${o.ga}">${labels[o.res]}</span>`
+    ).join("") +
+      `<span class="form-meta">${wins}S · ${draws}U · ${losses}N — ${pts} von ${outcomes.length * 3} Punkten</span>`;
     sectionEl.hidden = false;
   }
 
-  // ---- Saison-Statistik aus der Tabellen-Zeile des FCZ ----
+  // ---- Aufstellung ----
+  function lineupPlayers(raw){
+    if (!raw) return [];
+    return raw.split(";").map(s => s.replace(/\s*\([^)]*\)\s*$/, "").trim()).filter(Boolean);
+  }
+
+  function renderLineup(ev){
+    const sectionEl = $("lineupSection");
+    const wrapEl = $("lineupWrap");
+    if (!ev){ sectionEl.hidden = true; return; }
+
+    const fczHome = isFczName(ev.strHomeTeam);
+    const fczAway = isFczName(ev.strAwayTeam);
+    if (!fczHome && !fczAway){ sectionEl.hidden = true; return; }
+    const side = fczHome ? "Home" : "Away";
+
+    const formation = ev[`str${side}Formation`];
+    const lines = [
+      { role: "Tor",        players: lineupPlayers(ev[`str${side}LineupGoalkeeper`]) },
+      { role: "Abwehr",     players: lineupPlayers(ev[`str${side}LineupDefense`]) },
+      { role: "Mittelfeld", players: lineupPlayers(ev[`str${side}LineupMidfield`]) },
+      { role: "Sturm",      players: lineupPlayers(ev[`str${side}LineupForward`]) },
+      { role: "Ersatzbank", players: lineupPlayers(ev[`str${side}LineupSubstitutes`]) }
+    ];
+    if (!lines.some(l => l.players.length) && !formation){ sectionEl.hidden = true; return; }
+
+    const scoreStr = (ev.intHomeScore != null && ev.intAwayScore != null)
+      ? ` ${esc(ev.intHomeScore)}:${esc(ev.intAwayScore)}` : "";
+    const linesHtml = lines.filter(l => l.players.length).map(l => `
+      <div class="lineup-line">
+        <p class="lu-role">${esc(l.role)}</p>
+        <div class="lu-players">
+          ${l.players.map(p => `<span class="lu-player">${esc(p)}</span>`).join("")}
+        </div>
+      </div>`).join("");
+
+    wrapEl.innerHTML = `
+      <div class="lineup-head">
+        <span class="lu-match">${esc(ev.strHomeTeam)} – ${esc(ev.strAwayTeam)}${scoreStr}</span>
+        ${formation ? `<span class="lu-formation">${esc(formation)}</span>` : ""}
+      </div>
+      ${linesHtml || `<p class="empty-state">Für diese Partie liegen nur Formationsdaten vor.</p>`}`;
+    sectionEl.hidden = false;
+  }
+
+  async function loadLineup(lastEvents){
+    if (!lastEvents || !lastEvents.length){ renderLineup(null); return; }
+    const recent = [...lastEvents].sort((a, b) => new Date(b.dateEvent) - new Date(a.dateEvent))[0];
+    if (!recent || !recent.idEvent){ renderLineup(null); return; }
+    try{
+      const data = await fetchJson(`${BASE}/lookupevent.php?id=${recent.idEvent}`);
+      renderLineup(data && data.events ? data.events[0] : null);
+    } catch(e){ renderLineup(null); }
+  }
+
+  // ---- Saison-Statistik ----
+  function fmtNum(v, decimals){
+    return decimals ? v.toFixed(decimals) : String(Math.round(v));
+  }
+
   function renderStats(rows){
-    const sectionEl = document.getElementById("statsSection");
-    const gridEl = document.getElementById("statsGrid");
+    const sectionEl = $("statsSection");
+    const gridEl = $("statsGrid");
     const fcz = rows && rows.find(r => r.isFcz);
     if (!fcz || !fcz.played){ sectionEl.hidden = true; return; }
 
-    const ppg = (fcz.points / fcz.played);
+    const ppg = fcz.points / fcz.played;
     const winPct = (fcz.win / fcz.played) * 100;
-    const gfAvg = (fcz.gf / fcz.played);
-    const gaAvg = (fcz.ga / fcz.played);
-    const total = rows.length;
-    const gdClass = fcz.gd > 0 ? "good" : fcz.gd < 0 ? "bad" : "";
     const hasGoals = Number.isFinite(fcz.gf) && Number.isFinite(fcz.ga);
 
     const cards = [
-      { label: "Tabellenplatz", num: fcz.rank, suffix: ".", cls: "accent",
-        sub: total ? `von ${total} Teams` : "" },
-      { label: "Punkte", num: fcz.points, cls: "accent",
-        sub: `aus ${fcz.played} Spielen` },
-      { label: "Punkteschnitt", num: ppg, decimals: 2,
+      { label: "Tabellenplatz", value: `${fcz.rank}.`,
+        sub: rows.length ? `von ${rows.length} Teams` : "" },
+      { label: "Punkte", value: String(fcz.points),
+        sub: `aus ${fcz.played} ${fcz.played === 1 ? "Spiel" : "Spielen"}` },
+      { label: "Schnitt", value: fmtNum(ppg, 2),
         sub: "Punkte pro Spiel" },
-      { label: "Siegquote", num: winPct, decimals: 0, suffix: "%",
+      { label: "Siegquote", value: `${fmtNum(winPct, 0)}%`,
         cls: winPct >= 50 ? "good" : winPct < 30 ? "bad" : "",
         sub: `${fcz.win}S · ${fcz.draw}U · ${fcz.loss}N` },
-      { label: "Tordifferenz", num: fcz.gd, prefix: fcz.gd > 0 ? "+" : "", cls: gdClass,
-        sub: hasGoals ? `${fcz.gf} erzielt · ${fcz.ga} kassiert` : "" }
+      { label: "Tordifferenz", value: (fcz.gd > 0 ? "+" : "") + fcz.gd,
+        cls: fcz.gd > 0 ? "good" : fcz.gd < 0 ? "bad" : "",
+        sub: hasGoals ? `${fcz.gf}:${fcz.ga} Tore` : "" }
     ];
     if (hasGoals){
       cards.push(
-        { label: "Tore pro Spiel", num: gfAvg, decimals: 2, cls: "good",
-          sub: "erzielt im Schnitt" },
-        { label: "Gegentore / Spiel", num: gaAvg, decimals: 2, cls: "bad",
-          sub: "kassiert im Schnitt" }
+        { label: "Tore / Spiel",      value: fmtNum(fcz.gf / fcz.played, 2), sub: "erzielt" },
+        { label: "Gegentore / Spiel", value: fmtNum(fcz.ga / fcz.played, 2), sub: "kassiert" }
       );
     }
 
-    gridEl.innerHTML = cards.map((c, i) => `
-      <div class="stat-card" style="--i:${i}">
-        <p class="stat-label">${c.label}</p>
-        <p class="stat-value ${c.cls || ""}"
-           data-num="${c.num}" data-dec="${c.decimals || 0}"
-           data-pre="${c.prefix || ""}" data-suf="${c.suffix || ""}">0</p>
-        ${c.sub ? `<p class="stat-sub">${c.sub}</p>` : ""}
+    gridEl.innerHTML = cards.map(c => `
+      <div class="stat-card">
+        <p class="stat-label">${esc(c.label)}</p>
+        <p class="stat-value ${c.cls || ""}">${esc(c.value)}</p>
+        ${c.sub ? `<p class="stat-sub">${esc(c.sub)}</p>` : ""}
       </div>`).join("");
     sectionEl.hidden = false;
-
-    // Zahlen gestaffelt hochzählen lassen
-    gridEl.querySelectorAll(".stat-value").forEach((el, i) => {
-      const run = () => animateCount(el, parseFloat(el.dataset.num), {
-        decimals: +el.dataset.dec, prefix: el.dataset.pre, suffix: el.dataset.suf
-      });
-      if (prefersReducedMotion()) run();
-      else setTimeout(run, 140 + i * 90);
-    });
   }
 
-  // ---- Step 4: league table ----
-  // Liefert die volle Tabelle von OpenLigaDB; fällt bei Fehler auf die
-  // (gedeckelte) TheSportsDB-Tabelle zurück. Gibt normalisierte Zeilen zurück.
+  // ---- Tabelle ----
   async function fetchTable(){
-    // 1) Wikipedia — volle UND korrekte 12er-Tabelle, kostenlos, ohne Key (CORS via origin=*)
+    // 1) Wikipedia liefert die vollständige 12er-Tabelle, ohne Key und CORS-fähig.
     try{
       const url = `${WIKI_API}?action=parse&page=${encodeURIComponent(swissSeasonTitle())}` +
                   `&prop=wikitext&format=json&origin=*`;
       const data = await fetchJson(url);
       const wt = data && data.parse && data.parse.wikitext && data.parse.wikitext["*"];
       const rows = wt ? parseWikiTable(wt) : null;
-      if (rows && rows.length) return rows;
-    } catch(e){ /* fällt unten auf TheSportsDB zurück */ }
+      if (rows && rows.length) return { rows, source: "Wikipedia" };
+    } catch(e){ /* unten auf TheSportsDB zurückfallen */ }
 
-    // 2) Fallback: TheSportsDB (Free-Key, oft nur Top 5)
+    // 2) Rückfallebene: TheSportsDB (Testkey, oft nur die vordersten Ränge).
     if (fczLeagueId){
       try{
         const td = await fetchJson(`${BASE}/lookuptable.php?l=${fczLeagueId}&s=${currentSeason()}`);
         const rows = td && td.table;
         if (rows && rows.length){
-          return rows.map(r => ({
-            rank: +r.intRank,
-            team: r.strTeam,
-            played: +r.intPlayed,
-            win: +r.intWin, draw: +r.intDraw, loss: +r.intLoss,
-            gf: +r.intGoalsFor, ga: +r.intGoalsAgainst,
-            gd: +r.intGoalDifference,
-            points: +r.intPoints,
-            isFcz: r.idTeam === fczTeamId
-          }));
+          return {
+            source: "TheSportsDB",
+            rows: rows.map(r => ({
+              rank: +r.intRank,
+              team: r.strTeam,
+              played: +r.intPlayed,
+              win: +r.intWin, draw: +r.intDraw, loss: +r.intLoss,
+              gf: +r.intGoalsFor, ga: +r.intGoalsAgainst,
+              gd: +r.intGoalDifference,
+              points: +r.intPoints,
+              isFcz: r.idTeam === fczTeamId || isFczName(r.strTeam)
+            }))
+          };
         }
-      } catch(e){ /* ignore */ }
+      } catch(e){ /* ignorieren */ }
     }
     return null;
   }
 
-  function renderTable(rows){
-    const wrapEl = document.getElementById("tableWrap");
-    const eyebrowEl = document.getElementById("tableEyebrow");
-    const noteEl = document.getElementById("tableNote");
-    if (!rows || !rows.length){
-      eyebrowEl.textContent = "Tabelle";
+  function renderTable(result){
+    const wrapEl = $("tableWrap");
+    const asideEl = $("tableAside");
+    const noteEl = $("tableNote");
+
+    if (!result || !result.rows || !result.rows.length){
+      asideEl.textContent = "";
       noteEl.hidden = true;
-      wrapEl.innerHTML = `<p class="empty-state" style="padding:16px;">Tabelle aktuell nicht verfügbar. Einfach später nochmal versuchen.</p>`;
+      wrapEl.innerHTML = `<p class="empty-state" style="padding:16px;">Die Tabelle ist zurzeit nicht abrufbar.</p>`;
       return;
     }
+
+    const rows = result.rows;
     const full = rows.length >= 10;
-    eyebrowEl.textContent = full ? "Tabelle" : `Tabelle (Top ${rows.length})`;
+    asideEl.textContent = full ? `Saison ${seasonLabel()}` : `Top ${rows.length}`;
+
     if (full){
       noteEl.hidden = true;
     } else {
-      noteEl.innerHTML = `Nur die ersten ${rows.length} Plätze verfügbar. Die komplette Super-League-Tabelle gibt's <a href="https://www.google.com/search?q=Super+League+Tabelle" target="_blank" rel="noopener">hier</a>.`;
+      noteEl.textContent = `Nur die ersten ${rows.length} Ränge sind über die Datenquelle verfügbar.`;
       noteEl.hidden = false;
     }
+
     const body = rows.map(r => `
       <tr class="${r.isFcz ? "fcz-row" : ""}">
-        <td>${r.rank}</td>
-        <td class="team-name">${r.team}</td>
-        <td>${r.played}</td>
-        <td>${r.win}</td>
-        <td>${r.draw}</td>
-        <td>${r.loss}</td>
-        <td>${r.gd > 0 ? "+" + r.gd : r.gd}</td>
-        <td>${r.points}</td>
+        <td class="rank">${esc(r.rank)}</td>
+        <td class="team-name">${esc(r.team)}</td>
+        <td>${esc(r.played)}</td>
+        <td>${esc(r.win)}</td>
+        <td>${esc(r.draw)}</td>
+        <td>${esc(r.loss)}</td>
+        <td>${esc(r.gf)}:${esc(r.ga)}</td>
+        <td>${r.gd > 0 ? "+" + esc(r.gd) : esc(r.gd)}</td>
+        <td class="pts">${esc(r.points)}</td>
       </tr>`).join("");
+
     wrapEl.innerHTML = `
       <table>
         <thead><tr>
-          <th>#</th><th style="text-align:left;">Team</th><th>Sp</th><th>S</th><th>U</th><th>N</th><th>+/-</th><th>Pkt</th>
+          <th class="rank" scope="col">#</th>
+          <th class="team-name" scope="col">Verein</th>
+          <th scope="col" title="Spiele">Sp</th>
+          <th scope="col" title="Siege">S</th>
+          <th scope="col" title="Unentschieden">U</th>
+          <th scope="col" title="Niederlagen">N</th>
+          <th scope="col" title="Tore">Tore</th>
+          <th scope="col" title="Tordifferenz">Diff</th>
+          <th class="pts" scope="col" title="Punkte">Pkt</th>
         </tr></thead>
         <tbody>${body}</tbody>
       </table>`;
   }
 
-  // ---- Orchestration ----
+  // ---- Ablauf ----
   async function loadAll(){
-    const refreshBtn = document.getElementById("refreshBtn");
+    const refreshBtn = $("refreshBtn");
     refreshBtn.disabled = true;
     refreshBtn.textContent = "Lädt …";
-    if (countdownTimer) clearInterval(countdownTimer);
+    if (countdownTimer){ clearInterval(countdownTimer); countdownTimer = null; }
+
+    $("seasonLabel").textContent = seasonLabel();
 
     try{
       if (!fczTeamId){
         const team = await findFczTeam();
         if (!team){
-          setEmpty(document.getElementById("heroSection"), "FC Zürich konnte über die API nicht gefunden werden.");
+          $("matchup").textContent = "Daten nicht verfügbar";
+          $("kickoff").innerHTML = `<span class="empty-state">Der FC Zürich liess sich über die Datenquelle nicht finden.</span>`;
           return;
         }
         fczTeamId = team.idTeam;
@@ -1138,7 +1290,7 @@
 
         const badge = team.strTeamBadge || team.strBadge;
         if (badge){
-          const crestEl = document.getElementById("crest");
+          const crestEl = $("crest");
           crestEl.onload = () => { crestEl.hidden = false; };
           crestEl.src = badge;
         }
@@ -1149,30 +1301,43 @@
         fetchJson(`${BASE}/eventslast.php?id=${fczTeamId}`).catch(() => null)
       ]);
 
-      const nextEvents = nextData && nextData.events ? nextData.events : [];
+      const nextEvents = (nextData && nextData.events) || [];
       const nextEvent = nextEvents[0] || null;
       const lastEvents = lastData ? (lastData.results || lastData.events) : null;
 
       renderNextMatch(nextEvent);
-      renderDerby(nextEvents);
+      // Erst mit dem zeigen, was sofort da ist …
       renderResults(lastEvents);
       renderForm(lastEvents);
-      loadLineup(lastEvents);
 
-      const tableRows = await fetchTable();
-      renderTable(tableRows);
-      renderStats(tableRows);
+      const table = await fetchTable();
+      renderTable(table);
+      renderStats(table && table.rows);
+
+      // … dann um die übrigen gespielten Runden ergänzen.
+      const recent = await collectRecentMatches(nextEvent, lastEvents);
+      if (recent.length){
+        renderResults(recent);
+        renderForm(recent);
+      }
+      loadLineup(recent.length ? recent : lastEvents);
+
+      // Zuletzt, weil die Rundensuche am meisten Anfragen kostet.
+      renderDerby(await findNextDerby(nextEvent));
+
+      $("updated").textContent = "Stand " + new Date().toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
 
     } catch(err){
       console.error(err);
-      setEmpty(document.getElementById("heroSection"), "Daten konnten nicht geladen werden. Später nochmal versuchen.");
+      $("matchup").textContent = "Daten nicht verfügbar";
+      $("kickoff").innerHTML = `<span class="empty-state">Die Daten liessen sich nicht laden. Bitte später erneut versuchen.</span>`;
     } finally{
       refreshBtn.disabled = false;
       refreshBtn.textContent = "Aktualisieren";
     }
   }
 
-  document.getElementById("refreshBtn").addEventListener("click", loadAll);
+  $("refreshBtn").addEventListener("click", loadAll);
   loadAll();
 })();
 </script>
