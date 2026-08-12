@@ -10,23 +10,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:            #0c1116;
-    --surface:       #141b22;
-    --surface-2:     #1a222b;
-    --border:        #222c36;
-    --border-strong: #2f3d4a;
+    --bg:            #f6f8fa;
+    --surface:       #ffffff;
+    --surface-2:     #eef2f6;
+    --border:        #e1e7ec;
+    --border-strong: #c7d1db;
 
-    --text:          #e6edf3;
-    --text-muted:    #8b98a6;
-    --text-faint:    #64707d;
+    --text:          #1c242c;
+    --text-muted:    #5b6770;
+    --text-faint:    #808c96;
 
-    --accent:        #4a8fd4;
-    --accent-bright: #6ba7e6;
-    --accent-soft:   rgba(74,143,212,0.10);
+    --accent:        #2f6fb8;
+    --accent-bright: #1d5fa8;
+    --accent-soft:   rgba(47,111,184,0.08);
 
-    --win:  #3f9e56;
-    --draw: #9a8434;
-    --loss: #bf4340;
+    --win:  #2f8f4c;
+    --draw: #8a7220;
+    --loss: #c23a35;
 
     --radius:    10px;
     --radius-sm: 6px;
@@ -52,7 +52,7 @@
     position: fixed;
     top: 0; left: 0; right: 0;
     height: 320px;
-    background: linear-gradient(180deg, rgba(74,143,212,0.07) 0%, transparent 100%);
+    background: linear-gradient(180deg, rgba(47,111,184,0.05) 0%, transparent 100%);
     pointer-events: none;
     z-index: 0;
   }
@@ -190,7 +190,7 @@
     border: 1px solid var(--border-strong);
     color: var(--text-muted);
   }
-  .tag.home{ color: var(--accent-bright); border-color: rgba(74,143,212,0.45); }
+  .tag.home{ color: var(--accent-bright); border-color: rgba(47,111,184,0.4); }
 
   /* Trenner zwischen Heim- und Auswärtsteam, überall gleich */
   .sep{ color: var(--text-faint); font-weight: 400; margin: 0 6px; }
@@ -432,7 +432,7 @@
   tbody tr + tr td{ border-top: 1px solid var(--border); }
   tbody tr:hover{ background: var(--surface-2); }
   tr.fcz-row{ background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
-  tr.fcz-row:hover{ background: rgba(74,143,212,0.16); }
+  tr.fcz-row:hover{ background: rgba(47,111,184,0.14); }
   tr.fcz-row td{ color: var(--text); }
   tr.fcz-row td.team-name{ font-weight: 700; }
   tr.fcz-row td.rank{ color: var(--text); }
@@ -657,15 +657,22 @@
 
   function kickoffDate(ev){
     if (!ev) return null;
-    const raw = ev.strTimestamp || `${ev.dateEvent}T${ev.strTime || "00:00:00"}`;
-    const m = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/.exec(String(raw));
-    if (m){
-      // Ohne Offset im String: als Schweizer Ortszeit lesen.
-      if (!/(Z|[+-]\d{2}:?\d{2})$/.test(String(raw).trim())){
-        return zurichWallToInstant(+m[1], +m[2], +m[3], +m[4], +m[5], +m[6] || 0);
-      }
+
+    // TheSportsDB liefert zwei Zeit-Felder: *Local ist die tatsächliche
+    // Schweizer Ortszeit (genau das, was wir zeigen wollen); strTimestamp/
+    // strTime sind dagegen UTC. Frueher wurde strTimestamp faelschlich als
+    // bereits-Zuercher-Ortszeit behandelt — das ergab bei Sommerzeit eine um
+    // zwei Stunden zu fruehe Anzeige.
+    const dl = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ev.dateEventLocal || ev.dateEvent || ""));
+    const tl = /^(\d{2}):(\d{2})(?::(\d{2}))?/.exec(String(ev.strTimeLocal || ""));
+    if (dl && tl){
+      return zurichWallToInstant(+dl[1], +dl[2], +dl[3], +tl[1], +tl[2], +tl[3] || 0);
     }
-    const d = new Date(raw);
+
+    // Fallback ohne *Local-Felder: strTimestamp/strTime sind UTC.
+    const raw = String(ev.strTimestamp || `${ev.dateEvent}T${ev.strTime || "00:00:00"}`).trim();
+    const hasOffset = /(Z|[+-]\d{2}:?\d{2})$/.test(raw);
+    const d = new Date(hasOffset ? raw : `${raw}Z`);
     return isNaN(d.getTime()) ? null : d;
   }
 
@@ -855,9 +862,14 @@
            (isFczName(away) && isDerbyOpponent(home));
   }
 
-  // Startrunde: die Runde des nächsten FCZ-Spiels, sonst aus dem Datum geschätzt.
+  // Startrunde: die Runde des nächsten FCZ-Ligaspiels, sonst aus dem Datum
+  // geschätzt. eventsnext.php liefert das nächste Spiel egal welcher
+  // Wettbewerb (z.B. Schweizer Cup) — dessen intRound ist eine Cup-Runde
+  // und darf nicht als Liga-Runde missverstanden werden, sonst scannt die
+  // Derby-Suche an der falschen Stelle im Spielplan.
   function estimateRound(nextEvent){
-    const r = nextEvent && parseInt(nextEvent.intRound, 10);
+    const isLeagueMatch = nextEvent && String(nextEvent.idLeague) === SUPER_LEAGUE_ID;
+    const r = isLeagueMatch && parseInt(nextEvent.intRound, 10);
     if (Number.isFinite(r) && r > 0) return Math.min(MAX_ROUNDS, r);
     const start = new Date(seasonStartYear(), 6, 18); // ~18. Juli
     const weeks = Math.floor((Date.now() - start) / (7 * 86400000));
