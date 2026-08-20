@@ -20,13 +20,19 @@
 |---|---|
 | 🗓️ **Nächstes Spiel** | Heim/Auswärts-Matchup mit Ort und Anstosszeit |
 | ⏱️ **Live-Countdown** | Tage / Std / Min / Sek bis zum Anpfiff, läuft im Browser |
-| 📈 **Form** | Letzte Spiele als S/U/N-Badges inkl. Punkteausbeute |
+| 📅 **Spielplan** | Die nächsten anstehenden FCZ-Ligaspiele auf einen Blick |
+| 📈 **Form** | Letzte Spiele als S/U/N-Badges inkl. Punkteausbeute und Trend-Grafik |
+| 📉 **Punkte-Schnitt-Trend** | Punkte pro Spiel, kumuliert über die ganze Saison, als Linien-Grafik |
 | 📊 **Saison-Statistik** | Tabellenplatz, Punkteschnitt, Siegquote, Tordifferenz, Tore & Gegentore pro Spiel |
+| 📐 **Tabellenverlauf** | FCZ-Tabellenplatz nach jedem Spieltag als Linien-Grafik |
 | 🔥 **Nächstes Derby** | Erkennt automatisch das nächste Zürcher Derby (FCZ vs. GC) mit Datum & Countdown-Tagen |
 | ▶️ **Highlights** | Pro Resultat ein YouTube-Highlights-Link (echtes Video wenn verfügbar, sonst Suche) |
 | 🧩 **Aufstellung** | Formation + Spieler des letzten Spiels nach Mannschaftsteilen (sofern API-Daten vorhanden) |
 | 📋 **Resultate** | Liste der jüngsten Spiele mit Endstand |
 | 🏆 **Tabelle** | Aktuelle Super-League-Tabelle, FCZ-Zeile hervorgehoben |
+| 🏠✈️ **Heim/Auswärts-Split** | Eigene Heim- und Auswärtstabelle, berechnet aus den Saison-Ergebnissen |
+| 🤝 **Head-to-Head** | Bilanz gegen einen frei wählbaren Gegner (Saison-Begegnungen) |
+| ⚖️ **Team-Vergleich** | Bis zu vier Teams nebeneinander vergleichen (Punkte, Schnitt, Form, Tore) |
 | 🛡️ **Wappen** | FCZ-Badge wird live aus der API geladen |
 
 Alles in **einer einzigen `index.html`** — kein Backend, kein Build, kein Framework.
@@ -54,6 +60,7 @@ Alles in **einer einzigen `index.html`** — kein Backend, kein Build, kein Fram
 - **Nächstes Derby:** wird aus den nächsten angesetzten Spielen erkannt (Gegner = GC). Liegt das Derby weiter in der Zukunft, erscheint es, sobald es in den kommenden Spielen auftaucht.
 - **Aufstellung:** kommt aus `lookupevent.php` und wird nur angezeigt, wenn TheSportsDB für das Spiel Lineup-Daten hat — für die Super League ist das je nach Spiel lückenhaft.
 - **Highlights:** nutzt das hinterlegte Video, falls vorhanden; sonst öffnet der Link eine YouTube-Suche „Heim Gast Highlights".
+- **Spielplan, Punkte-Trend, Tabellenverlauf, Heim/Auswärts-Split, Head-to-Head, Team-Vergleich:** werden client-seitig aus den rundenweise abgerufenen Saison-Ergebnissen (`eventsround.php`) berechnet — derselbe Mechanismus, der schon die Derby-Suche speist. Der Tabellenverlauf nutzt dabei ein vereinfachtes Tie-Break (Punkte, Tordifferenz, Tore); die offizielle Liga kann bei Punktgleichheit abweichende Kopf-an-Kopf-Regeln anwenden. Head-to-Head und Team-Vergleich beziehen sich nur auf die laufende Saison, da der Testkey keinen zuverlässigen Zugriff auf vergangene Saisons bietet (`eventsvs.php` ist mit dem öffentlichen Testkey nicht erreichbar).
 
 ## 🚀 Deployment
 
@@ -79,8 +86,9 @@ Bei jedem Push auf `main` lädt der Workflow ([`deploy.yml`](.github/workflows/d
 - **PWA** — Manifest + Service Worker zum „Installieren"
 - **Cup-Spiele** — Schweizer Cup neben der Liga
 - **Auto-Refresh** — alle paar Minuten automatisch neu laden
-- **Topscorer** — Torschützenliste (zuverlässig mit TheSportsDB-Premium-Key)
+- **Topscorer** — Torschützenliste; mit dem Testkey sind Torschützen-Felder für die Super League zu lückenhaft für eine zuverlässige Liste (zuverlässig erst mit TheSportsDB-Premium-Key, alternativ Best-effort aus vorhandenen Lineup-Daten mit explizitem Unvollständigkeits-Hinweis)
 - **Volle Aufstellungs-Historie** — Lineups aller Spiele (Premium-Key erweitert die Datenlage)
+- **Mehrsaisonales Head-to-Head** — Bilanz über mehrere Saisons; bräuchte einen vollständigen Rundenscan vergangener Saisons (`eventsvs.php` ist mit dem Testkey nicht erreichbar)
 
 ## 📄 Lizenz / Daten
 

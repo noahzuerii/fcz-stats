@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FC Zürich — Super League Dashboard</title>
-<meta name="description" content="Dashboard für den FC Zürich: nächstes Spiel, Zürcher Derby, Form, Resultate, Aufstellung und Tabelle der Super League.">
+<meta name="description" content="Dashboard für den FC Zürich: Spielplan, Zürcher Derby, Form- und Punktetrend, Tabelle mit Heim/Auswärts-Split, Head-to-Head, Team-Vergleich, Resultate und Aufstellung der Super League.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -275,6 +275,127 @@
     font-size: 13px;
     margin-left: 8px;
   }
+  .form-trend{ margin-top: 16px; }
+  .form-trend .ft-label{
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin: 0 0 6px;
+  }
+  .form-trend svg{ display: block; width: 100%; max-width: 300px; height: auto; }
+  .form-trend circle{ stroke: var(--surface); stroke-width: 1.5; }
+
+  /* ---------- Spielplan ---------- */
+  .fixture-list{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .fixture-list li{
+    background: var(--surface);
+    padding: 12px 16px;
+    display: grid;
+    grid-template-columns: 52px 1fr auto;
+    align-items: center;
+    gap: 14px;
+    font-size: 14px;
+  }
+  .fixture-list li + li{ border-top: 1px solid var(--border); }
+
+  /* ---------- Punkte-Schnitt-Trend & Tabellenverlauf ---------- */
+  .trend-wrap{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+  }
+  .trend-value{
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin: 0;
+  }
+  .trend-sub{
+    color: var(--text-faint);
+    font-size: 12.5px;
+    margin: 2px 0 14px;
+  }
+  .trend-chart svg{ display: block; width: 100%; height: auto; }
+
+  /* ---------- Heim/Auswärts-Split ---------- */
+  .split-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .split-col h3{
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 8px;
+  }
+  .split-col table{ font-size: 12.5px; }
+  .split-col th, .split-col td{ padding: 8px 6px; }
+
+  /* ---------- Head-to-Head ---------- */
+  .h2h-controls{ margin-bottom: 14px; }
+  .h2h-select{
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    font: inherit;
+    font-size: 13.5px;
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    min-width: 220px;
+    max-width: 100%;
+  }
+  .h2h-select:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+  .h2h-body{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+  }
+  .h2h-summary{ display: flex; gap: 24px; flex-wrap: wrap; margin: 0 0 14px; }
+  .h2h-summary .h2h-num{ font-size: 22px; font-weight: 700; line-height: 1; }
+  .h2h-summary .h2h-label{ font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+  .h2h-matches{ list-style: none; margin: 0; padding: 0; }
+  .h2h-matches li{
+    display: flex; justify-content: space-between; gap: 10px;
+    padding: 9px 0; font-size: 13.5px;
+    border-top: 1px solid var(--border);
+  }
+  .h2h-matches li:first-child{ border-top: none; padding-top: 0; }
+  .h2h-matches .h2h-score{ font-weight: 600; white-space: nowrap; }
+
+  /* ---------- Team-Vergleich ---------- */
+  .compare-picker{
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-bottom: 16px;
+  }
+  .compare-chip{
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    padding: 7px 13px;
+    font-size: 13px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .compare-chip input{ accent-color: var(--accent); margin: 0; }
+  .compare-chip.active{ border-color: var(--accent); background: var(--accent-soft); color: var(--accent-bright); font-weight: 600; }
+  .compare-chip.locked{ opacity: 0.85; cursor: default; }
+
+  @media (max-width: 640px){
+    .split-grid{ grid-template-columns: 1fr; }
+  }
 
   /* ---------- Saison-Statistik ---------- */
   /* Eigene Rahmen statt 1px-Gap-Trick: eine unvollständige letzte Reihe
@@ -497,6 +618,14 @@
       </div>
     </section>
 
+    <section id="spielplanSection" hidden>
+      <div class="section-head">
+        <h2>Spielplan</h2>
+        <span class="aside">nächste Spiele</span>
+      </div>
+      <ul class="fixture-list" id="spielplanList"></ul>
+    </section>
+
     <section id="derbySection">
       <div class="section-head">
         <h2>Zürcher Derby</h2>
@@ -511,6 +640,19 @@
         <span class="aside" id="formAside"></span>
       </div>
       <div class="form-row" id="formRow"></div>
+      <div class="form-trend" id="formTrend"></div>
+    </section>
+
+    <section id="ppgSection" hidden>
+      <div class="section-head">
+        <h2>Punkte-Schnitt-Trend</h2>
+        <span class="aside" id="ppgAside"></span>
+      </div>
+      <div class="trend-wrap">
+        <p class="trend-value" id="ppgValue">–</p>
+        <p class="trend-sub">Punkte pro Spiel, kumuliert über die Saison</p>
+        <div class="trend-chart" id="ppgChart"></div>
+      </div>
     </section>
 
     <section id="statsSection" hidden>
@@ -518,6 +660,19 @@
         <h2>Saison-Statistik</h2>
       </div>
       <div class="stats-grid" id="statsGrid"></div>
+    </section>
+
+    <section id="rankSection" hidden>
+      <div class="section-head">
+        <h2>Tabellenverlauf</h2>
+        <span class="aside" id="rankAside"></span>
+      </div>
+      <div class="trend-wrap">
+        <p class="trend-value" id="rankValue">–</p>
+        <p class="trend-sub">Tabellenplatz nach jedem Spieltag</p>
+        <div class="trend-chart" id="rankChart"></div>
+      </div>
+      <p class="note">Vereinfachte Berechnung aus Punkten, Tordifferenz und erzielten Toren. Bei Punktgleichheit können die offiziellen Kopf-an-Kopf-Regeln der Liga abweichen.</p>
     </section>
 
     <section id="resultsSection">
@@ -553,6 +708,43 @@
         </div>
       </div>
       <p class="note" id="tableNote" hidden></p>
+    </section>
+
+    <section id="splitSection" hidden>
+      <div class="section-head">
+        <h2>Heim &amp; Auswärts</h2>
+        <span class="aside" id="splitAside"></span>
+      </div>
+      <div class="split-grid">
+        <div class="split-col">
+          <h3>Heimtabelle</h3>
+          <div class="table-wrap" id="splitHomeWrap"></div>
+        </div>
+        <div class="split-col">
+          <h3>Auswärtstabelle</h3>
+          <div class="table-wrap" id="splitAwayWrap"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="h2hSection" hidden>
+      <div class="section-head">
+        <h2>Head-to-Head</h2>
+        <span class="aside" id="h2hAside"></span>
+      </div>
+      <div class="h2h-controls">
+        <select class="h2h-select" id="h2hSelect" aria-label="Gegner auswählen"></select>
+      </div>
+      <div class="h2h-body" id="h2hBody"></div>
+    </section>
+
+    <section id="compareSection" hidden>
+      <div class="section-head">
+        <h2>Team-Vergleich</h2>
+        <span class="aside">Saison-Statistik nebeneinander</span>
+      </div>
+      <div class="compare-picker" id="comparePicker"></div>
+      <div class="table-wrap" id="compareWrap"></div>
     </section>
 
   </main>
@@ -628,6 +820,34 @@
     return DERBY_RE.test(String(name || ""));
   }
 
+  // Wikipedia ("FC Lugano", "BSC Young Boys", "Servette FC", "Grasshopper
+  // Club Zürich") und TheSportsDB ("Lugano", "Young Boys", "Servette",
+  // "Grasshoppers") schreiben Vereinsnamen unterschiedlich. Für Features,
+  // die beide Quellen zusammenführen (Heim/Auswärts-Split, Tabellenverlauf,
+  // Head-to-Head, Team-Vergleich), normalisieren wir auf einen Kern-Namen.
+  function normalizeTeamKey(name){
+    return String(name || "")
+      .toLowerCase()
+      .replace(/\bfc\b/g, " ")
+      .replace(/\bbsc\b/g, " ")
+      .replace(/\bclub\b/g, " ")
+      .replace(/\bgrasshopper\b/g, "grasshoppers")
+      .replace(/[^a-z0-9äöüéèàáâç]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+  function teamKeysMatch(a, b){
+    if (!a || !b) return false;
+    return a === b || a.includes(b) || b.includes(a);
+  }
+  // Ordnet einen TheSportsDB-Teamnamen einem der 12 Wikipedia-Tabellenteams
+  // zu. Liefert null, wenn kein eindeutiger Treffer besteht (z.B. bei
+  // Cup-Gegnern ausserhalb der Liga).
+  function matchCanonicalTeam(name, canonicalTeams){
+    const key = normalizeTeamKey(name);
+    return canonicalTeams.find(t => teamKeysMatch(t.key, key)) || null;
+  }
+
   // TheSportsDB liefert Anstosszeiten ohne Zeitzonen-Angabe
   // ("2026-09-05T18:30:00"). Gemeint ist die Schweizer Ortszeit. Ohne
   // Umrechnung würde ein Gerät im Ausland eine falsche Zeit und einen
@@ -658,22 +878,33 @@
   function kickoffDate(ev){
     if (!ev) return null;
 
-    // TheSportsDB liefert zwei Zeit-Felder: *Local ist die tatsächliche
-    // Schweizer Ortszeit (genau das, was wir zeigen wollen); strTimestamp/
-    // strTime sind dagegen UTC. Frueher wurde strTimestamp faelschlich als
-    // bereits-Zuercher-Ortszeit behandelt — das ergab bei Sommerzeit eine um
-    // zwei Stunden zu fruehe Anzeige.
+    // TheSportsDB liefert zwei Zeit-Felder: strTimestamp/strTime sind UTC,
+    // *Local wäre die vorgerechnete Schweizer Ortszeit. Frueher wurde
+    // strTimestamp faelschlich als bereits-Zuercher-Ortszeit behandelt —
+    // das ergab bei Sommerzeit eine um zwei Stunden zu fruehe Anzeige.
+    //
+    // Die *Local-Felder werden aber bei Spielverlegungen (z.B. TV-
+    // Ansetzung) beobachtbar nicht zuverlässig nachgeführt: strTimestamp
+    // wurde für ein Spiel korrekt auf die neue Zeit aktualisiert, während
+    // strTimeLocal noch die alte Zeit zeigte. strTimestamp/strTime sind
+    // darum die primäre Quelle; wir rechnen sie selbst über Europe/Zurich
+    // um (inkl. Sommerzeit), statt TheSportsDBs vorberechnetem *Local-Feld
+    // zu vertrauen.
+    const raw = String(ev.strTimestamp || (ev.dateEvent && ev.strTime ? `${ev.dateEvent}T${ev.strTime}` : "")).trim();
+    if (raw){
+      const hasOffset = /(Z|[+-]\d{2}:?\d{2})$/.test(raw);
+      const d = new Date(hasOffset ? raw : `${raw}Z`);
+      if (!isNaN(d.getTime())) return d;
+    }
+
+    // Fallback, falls strTimestamp/strTime ausnahmsweise fehlen sollten.
     const dl = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ev.dateEventLocal || ev.dateEvent || ""));
     const tl = /^(\d{2}):(\d{2})(?::(\d{2}))?/.exec(String(ev.strTimeLocal || ""));
     if (dl && tl){
       return zurichWallToInstant(+dl[1], +dl[2], +dl[3], +tl[1], +tl[2], +tl[3] || 0);
     }
 
-    // Fallback ohne *Local-Felder: strTimestamp/strTime sind UTC.
-    const raw = String(ev.strTimestamp || `${ev.dateEvent}T${ev.strTime || "00:00:00"}`).trim();
-    const hasOffset = /(Z|[+-]\d{2}:?\d{2})$/.test(raw);
-    const d = new Date(hasOffset ? raw : `${raw}Z`);
-    return isNaN(d.getTime()) ? null : d;
+    return null;
   }
 
   function fmtDateTime(d){
@@ -938,6 +1169,56 @@
     return { state: scannedToEnd ? "none-in-window" : "unavailable", lastRound };
   }
 
+  // ---- Spielplan (nächste Spiele) ----
+  // Nutzt denselben rundenweisen Scan wie die Derby-Suche (gleicher Cache,
+  // also i.d.R. keine zusätzlichen Anfragen, wenn beide im selben Ladevorgang
+  // laufen) — nur dass hier jedes künftige FCZ-Ligaspiel zählt, nicht nur
+  // das Derby.
+  const UPCOMING_WANT = 5;
+  const UPCOMING_SCAN_AHEAD = 10;
+
+  async function collectUpcomingFixtures(nextEvent){
+    const season = currentSeason();
+    const startRound = estimateRound(nextEvent);
+    const lastRound = Math.min(MAX_ROUNDS, startRound + UPCOMING_SCAN_AHEAD);
+    const now = new Date();
+    const found = [];
+
+    for (let r = startRound; r <= lastRound && found.length < UPCOMING_WANT; r++){
+      let events;
+      try{
+        events = await fetchRound(r, season);
+      } catch(e){
+        break; // lieber weniger Spiele zeigen als gar keine
+      }
+      events.filter(isFczMatch).forEach(ev => {
+        const when = kickoffDate(ev);
+        if (when && when > now) found.push(ev);
+      });
+      if (r < lastRound) await sleep(ROUND_FETCH_DELAY);
+    }
+
+    return found.sort((a, b) => kickoffDate(a) - kickoffDate(b)).slice(0, UPCOMING_WANT);
+  }
+
+  function renderSpielplan(events){
+    const sectionEl = $("spielplanSection");
+    const listEl = $("spielplanList");
+    if (!events || !events.length){ sectionEl.hidden = true; return; }
+
+    listEl.innerHTML = events.map(ev => {
+      const when = kickoffDate(ev);
+      const fczHome = isFczName(ev.strHomeTeam);
+      const date = when ? when.toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit" }) : "–";
+      return `<li>
+        <span class="res-date">${esc(date)}</span>
+        <span class="res-teams">${matchupHtml(ev.strHomeTeam, ev.strAwayTeam)}</span>
+        <span class="tag ${fczHome ? "home" : ""}">${fczHome ? "Heim" : "Auswärts"}</span>
+      </li>`;
+    }).join("");
+    sectionEl.hidden = false;
+  }
+
   function renderDerby(result){
     const bodyEl = $("derbyBody");
     const asideEl = $("derbyAside");
@@ -1020,6 +1301,33 @@
       .slice(0, RECENT_WANT);
   }
 
+  // ---- Saison-Rundendaten (gemeinsame Basis für mehrere Features) ----
+  // Liest alle bereits gespielten Runden der laufenden Saison — nicht nur
+  // FCZ-Spiele, sondern alle Begegnungen. Nutzt denselben Rundencache wie
+  // die Derby-Suche und die "letzten Spiele", ist also meist günstig.
+  // Daraus lassen sich ohne weitere Anfragen berechnen: Punkte-Trend,
+  // Heim/Auswärts-Split, Tabellenverlauf, Head-to-Head und Team-Vergleich
+  // (jeweils für diese Saison).
+  async function collectSeasonRounds(nextEvent){
+    const season = currentSeason();
+    const lastRound = Math.max(0, estimateRound(nextEvent) - 1);
+    const rounds = [];
+
+    for (let r = 1; r <= lastRound; r++){
+      let events;
+      try{
+        events = await fetchRound(r, season);
+      } catch(e){
+        break; // lieber eine unvollständige Saison zeigen als gar keine Daten
+      }
+      const played = events.filter(hasScore);
+      if (played.length) rounds.push({ round: r, events: played });
+      if (r < lastRound) await sleep(ROUND_FETCH_DELAY);
+    }
+
+    return rounds; // [{ round, events }, ...] chronologisch aufsteigend
+  }
+
   // ---- Resultate ----
   function fczOutcome(ev){
     const hs = parseInt(ev.intHomeScore, 10);
@@ -1072,8 +1380,11 @@
     const asideEl = $("formAside");
     if (!events || !events.length){ sectionEl.hidden = true; return; }
 
+    // Events und Ausgänge zusammen halten (chronologisch), damit die
+    // Trend-Grafik pro Punkt weiss, gegen wen und wann gespielt wurde.
     const sorted = [...events].sort((a, b) => new Date(a.dateEvent) - new Date(b.dateEvent));
-    const outcomes = sorted.map(fczOutcome).filter(Boolean);
+    const paired = sorted.map(ev => ({ ev, o: fczOutcome(ev) })).filter(p => p.o);
+    const outcomes = paired.map(p => p.o);
     if (!outcomes.length){ sectionEl.hidden = true; return; }
 
     const labels = { w: "S", d: "U", l: "N" };
@@ -1087,6 +1398,100 @@
       `<span class="form-badge ${o.res}" title="${o.gf}:${o.ga}">${labels[o.res]}</span>`
     ).join("") +
       `<span class="form-meta">${wins}S · ${draws}U · ${losses}N — ${pts} von ${outcomes.length * 3} Punkten</span>`;
+    renderFormTrend(paired);
+    sectionEl.hidden = false;
+  }
+
+  // ---- Formkurve (Trend-Grafik) ----
+  // Zeigt die Punkteausbeute (S=3, U=1, N=0) der letzten Spiele als kleine
+  // Linien-Grafik, damit man Aufwärts-/Abwärtstrends auf einen Blick sieht —
+  // die Badges oben zeigen nur die einzelnen Ergebnisse, keinen Verlauf.
+  function pointsForOutcome(o){ return o.res === "w" ? 3 : o.res === "d" ? 1 : 0; }
+  function trendColorVar(o){ return o.res === "w" ? "var(--win)" : o.res === "d" ? "var(--draw)" : "var(--loss)"; }
+
+  function renderFormTrend(paired){
+    const trendEl = $("formTrend");
+    if (!trendEl) return;
+    if (!paired || paired.length < 2){ trendEl.innerHTML = ""; return; }
+
+    const W = 300, H = 70, MX = 12, MY = 12;
+    const n = paired.length;
+    const step = (W - 2 * MX) / (n - 1);
+    const yFor = v => (H - MY) - (v / 3) * (H - 2 * MY); // 3 Pkt oben, 0 Pkt unten
+
+    const pts = paired.map((p, i) => ({ ...p, x: MX + i * step, y: yFor(pointsForOutcome(p.o)) }));
+
+    const path = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+
+    const dots = pts.map(p => {
+      const opp = isFczName(p.ev.strHomeTeam) ? p.ev.strAwayTeam : p.ev.strHomeTeam;
+      const date = new Date(p.ev.dateEvent).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit" });
+      const title = `${date} gegen ${opp}: ${p.o.gf}:${p.o.ga}`;
+      return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.6" fill="${trendColorVar(p)}"><title>${esc(title)}</title></circle>`;
+    }).join("");
+
+    // Groben Trend bestimmen: Punkteschnitt zweite Hälfte vs. erste Hälfte.
+    const mid = Math.ceil(n / 2);
+    const rest = n - mid;
+    let trendText = "";
+    if (rest > 0){
+      const firstAvg = pts.slice(0, mid).reduce((s, p) => s + pointsForOutcome(p.o), 0) / mid;
+      const secondAvg = pts.slice(mid).reduce((s, p) => s + pointsForOutcome(p.o), 0) / rest;
+      const diff = secondAvg - firstAvg;
+      trendText = diff > 0.4 ? "↗ Aufwärtstrend" : diff < -0.4 ? "↘ Abwärtstrend" : "→ stabil";
+    }
+
+    trendEl.innerHTML = `
+      ${trendText ? `<p class="ft-label">${esc(trendText)}</p>` : ""}
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Punkte-Trend der letzten ${n} Spiele">
+        <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+        ${dots}
+      </svg>`;
+  }
+
+  // ---- Punkte-Schnitt-Trend über die Saison ----
+  // Nutzt die vollständige (rückwärts gescannte) Saison, nicht nur die
+  // letzten 5 Spiele wie die Formkurve — zeigt den langfristigen Verlauf.
+  function renderPpgTrend(seasonRounds){
+    const sectionEl = $("ppgSection");
+    const asideEl = $("ppgAside");
+    const valueEl = $("ppgValue");
+    const chartEl = $("ppgChart");
+
+    const fczMatches = seasonRounds.flatMap(r => r.events).filter(isFczMatch)
+      .sort((a, b) => new Date(a.dateEvent) - new Date(b.dateEvent));
+
+    const series = [];
+    let cumPts = 0;
+    fczMatches.forEach(ev => {
+      const o = fczOutcome(ev);
+      if (!o) return;
+      cumPts += pointsForOutcome(o);
+      series.push({ ev, ppg: cumPts / (series.length + 1), matchday: series.length + 1 });
+    });
+
+    if (series.length < 2){ sectionEl.hidden = true; return; }
+
+    const last = series[series.length - 1];
+    asideEl.textContent = `${series.length} Spiele`;
+    valueEl.textContent = last.ppg.toFixed(2);
+
+    const W = 600, H = 120, MX = 14, MY = 14;
+    const n = series.length;
+    const step = (W - 2 * MX) / (n - 1);
+    const yFor = v => (H - MY) - (v / 3) * (H - 2 * MY);
+    const pts = series.map((s, i) => ({ ...s, x: MX + i * step, y: yFor(s.ppg) }));
+    const path = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+    const dots = pts.map(p => {
+      const date = new Date(p.ev.dateEvent).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit" });
+      const title = `Spieltag ${p.matchday} (${date}): Ø ${p.ppg.toFixed(2)} Pkt/Spiel`;
+      return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.6" fill="var(--accent)"><title>${esc(title)}</title></circle>`;
+    }).join("");
+
+    chartEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Punkteschnitt pro Spiel über die Saison">
+      <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+      ${dots}
+    </svg>`;
     sectionEl.hidden = false;
   }
 
@@ -1280,6 +1685,339 @@
       </table>`;
   }
 
+  // ---- Kanonische Team-Liste (aus der Wikipedia-Tabelle) ----
+  // Dient als gemeinsame Referenz für Tabellenverlauf, Heim/Auswärts-Split,
+  // Head-to-Head und Team-Vergleich, damit TheSportsDB-Ereignisse den
+  // richtigen Tabellen-Teams zugeordnet werden.
+  function buildCanonicalTeams(tableRows){
+    return (tableRows || []).map(r => ({ team: r.team, key: normalizeTeamKey(r.team), isFcz: r.isFcz }));
+  }
+
+  // ---- Tabellenverlauf ----
+  function computeRankHistory(seasonRounds, canonicalTeams){
+    if (!canonicalTeams.length) return [];
+    const state = new Map(canonicalTeams.map(t => [t.key, {
+      team: t.team, isFcz: t.isFcz, played: 0, win: 0, draw: 0, loss: 0, gf: 0, ga: 0, points: 0
+    }]));
+
+    const history = [];
+    seasonRounds.forEach(({ round, events }) => {
+      events.forEach(ev => {
+        const home = matchCanonicalTeam(ev.strHomeTeam, canonicalTeams);
+        const away = matchCanonicalTeam(ev.strAwayTeam, canonicalTeams);
+        if (!home || !away) return; // z.B. Cup-Partie ausserhalb der Liga
+        const hs = parseInt(ev.intHomeScore, 10), as = parseInt(ev.intAwayScore, 10);
+        if (Number.isNaN(hs) || Number.isNaN(as)) return;
+        const hSt = state.get(home.key), aSt = state.get(away.key);
+        hSt.played++; aSt.played++;
+        hSt.gf += hs; hSt.ga += as; aSt.gf += as; aSt.ga += hs;
+        if (hs > as){ hSt.win++; hSt.points += 3; aSt.loss++; }
+        else if (hs < as){ aSt.win++; aSt.points += 3; hSt.loss++; }
+        else { hSt.draw++; aSt.draw++; hSt.points++; aSt.points++; }
+      });
+
+      // Vereinfachtes Tie-Break (Punkte, Tordifferenz, Tore) — die offizielle
+      // Liga kann bei Punktgleichheit abweichende Kopf-an-Kopf-Regeln nutzen.
+      const standings = [...state.values()].sort((a, b) =>
+        b.points - a.points || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf);
+      standings.forEach((s, i) => { s.rank = i + 1; });
+      const fcz = standings.find(s => s.isFcz);
+      history.push({ round, fczRank: fcz ? fcz.rank : null, teamCount: standings.length });
+    });
+
+    return history;
+  }
+
+  function renderRankHistory(seasonRounds, tableRows){
+    const sectionEl = $("rankSection");
+    const asideEl = $("rankAside");
+    const valueEl = $("rankValue");
+    const chartEl = $("rankChart");
+
+    if (!tableRows || tableRows.length < 10){ sectionEl.hidden = true; return; }
+    const canonicalTeams = buildCanonicalTeams(tableRows);
+    const history = computeRankHistory(seasonRounds, canonicalTeams).filter(h => h.fczRank);
+    if (history.length < 2){ sectionEl.hidden = true; return; }
+
+    const last = history[history.length - 1];
+    asideEl.textContent = `${history.length} Spieltage`;
+    valueEl.textContent = `${last.fczRank}.`;
+
+    const W = 600, H = 120, MX = 14, MY = 14;
+    const n = history.length;
+    const step = (W - 2 * MX) / (n - 1);
+    const yFor = rank => MY + ((rank - 1) / Math.max(1, last.teamCount - 1)) * (H - 2 * MY); // Rang 1 = oben
+    const pts = history.map((h, i) => ({ ...h, x: MX + i * step, y: yFor(h.fczRank) }));
+    const path = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+    const dots = pts.map(p => {
+      const title = `Spieltag ${p.round}: Platz ${p.fczRank}`;
+      return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.6" fill="var(--accent)"><title>${esc(title)}</title></circle>`;
+    }).join("");
+
+    chartEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Tabellenplatz nach jedem Spieltag">
+      <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+      ${dots}
+    </svg>`;
+    sectionEl.hidden = false;
+  }
+
+  // ---- Heim/Auswärts-Split ----
+  function computeHomeAwaySplit(seasonRounds, canonicalTeams){
+    const flat = seasonRounds.flatMap(r => r.events);
+    const mk = () => ({ played: 0, win: 0, draw: 0, loss: 0, gf: 0, ga: 0 });
+    const home = new Map(canonicalTeams.map(t => [t.key, mk()]));
+    const away = new Map(canonicalTeams.map(t => [t.key, mk()]));
+
+    flat.forEach(ev => {
+      const h = matchCanonicalTeam(ev.strHomeTeam, canonicalTeams);
+      const a = matchCanonicalTeam(ev.strAwayTeam, canonicalTeams);
+      if (!h || !a) return;
+      const hs = parseInt(ev.intHomeScore, 10), as = parseInt(ev.intAwayScore, 10);
+      if (Number.isNaN(hs) || Number.isNaN(as)) return;
+
+      const hSt = home.get(h.key);
+      hSt.played++; hSt.gf += hs; hSt.ga += as;
+      if (hs > as) hSt.win++; else if (hs < as) hSt.loss++; else hSt.draw++;
+
+      const aSt = away.get(a.key);
+      aSt.played++; aSt.gf += as; aSt.ga += hs;
+      if (as > hs) aSt.win++; else if (as < hs) aSt.loss++; else aSt.draw++;
+    });
+
+    const build = map => canonicalTeams
+      .map(t => {
+        const s = map.get(t.key);
+        return { team: t.team, isFcz: t.isFcz, ...s, gd: s.gf - s.ga, points: s.win * 3 + s.draw };
+      })
+      .filter(r => r.played > 0)
+      .sort((a, b) => b.points - a.points || b.gd - a.gd || b.gf - a.gf)
+      .map((r, i) => ({ ...r, rank: i + 1 }));
+
+    return { home: build(home), away: build(away) };
+  }
+
+  function miniTableHtml(rows){
+    if (!rows.length) return `<p class="empty-state" style="padding:14px;">Noch keine Spiele.</p>`;
+    const body = rows.map(r => `
+      <tr class="${r.isFcz ? "fcz-row" : ""}">
+        <td class="rank">${esc(r.rank)}</td>
+        <td class="team-name">${esc(r.team)}</td>
+        <td>${esc(r.played)}</td>
+        <td>${esc(r.gf)}:${esc(r.ga)}</td>
+        <td class="pts">${esc(r.points)}</td>
+      </tr>`).join("");
+    return `<table>
+      <thead><tr>
+        <th class="rank" scope="col">#</th>
+        <th class="team-name" scope="col">Verein</th>
+        <th scope="col" title="Spiele">Sp</th>
+        <th scope="col" title="Tore">Tore</th>
+        <th class="pts" scope="col" title="Punkte">Pkt</th>
+      </tr></thead>
+      <tbody>${body}</tbody>
+    </table>`;
+  }
+
+  function renderHomeAwaySplit(seasonRounds, tableRows){
+    const sectionEl = $("splitSection");
+    const asideEl = $("splitAside");
+    const homeWrap = $("splitHomeWrap");
+    const awayWrap = $("splitAwayWrap");
+
+    if (!tableRows || tableRows.length < 10){ sectionEl.hidden = true; return; }
+    const canonicalTeams = buildCanonicalTeams(tableRows);
+    const { home, away } = computeHomeAwaySplit(seasonRounds, canonicalTeams);
+    if (!home.length && !away.length){ sectionEl.hidden = true; return; }
+
+    asideEl.textContent = `Saison ${seasonLabel()}`;
+    homeWrap.innerHTML = miniTableHtml(home);
+    awayWrap.innerHTML = miniTableHtml(away);
+    sectionEl.hidden = false;
+  }
+
+  // ---- Head-to-Head ----
+  // Basis ist die laufende Saison (siehe collectSeasonRounds) — TheSportsDB
+  // bietet über den öffentlichen Testkey keinen zuverlässigen Zugriff auf
+  // vergangene Saisons für einen echten historischen Vergleich.
+  let h2hData = { flat: [], canonicalTeams: [] };
+
+  function renderH2HResult(opponentKey){
+    const bodyEl = $("h2hBody");
+    const { flat, canonicalTeams } = h2hData;
+    const opp = canonicalTeams.find(t => t.key === opponentKey);
+    if (!opp){ bodyEl.innerHTML = `<p class="empty-state">Gegner auswählen.</p>`; return; }
+
+    const matches = flat.filter(ev => {
+      const h = matchCanonicalTeam(ev.strHomeTeam, canonicalTeams);
+      const a = matchCanonicalTeam(ev.strAwayTeam, canonicalTeams);
+      if (!h || !a) return false;
+      const involvesFcz = h.isFcz || a.isFcz;
+      const involvesOpp = h.key === opponentKey || a.key === opponentKey;
+      return involvesFcz && involvesOpp;
+    }).sort((a, b) => new Date(b.dateEvent) - new Date(a.dateEvent));
+
+    if (!matches.length){
+      bodyEl.innerHTML = `<p class="empty-state">In dieser Saison noch keine Begegnung gegen ${esc(opp.team)}.</p>`;
+      return;
+    }
+
+    let w = 0, d = 0, l = 0, gf = 0, ga = 0;
+    matches.forEach(ev => {
+      const o = fczOutcome(ev);
+      if (!o) return;
+      if (o.res === "w") w++; else if (o.res === "d") d++; else l++;
+      gf += o.gf; ga += o.ga;
+    });
+
+    const summary = `
+      <div class="h2h-summary">
+        <div><div class="h2h-num">${w}</div><div class="h2h-label">Siege</div></div>
+        <div><div class="h2h-num">${d}</div><div class="h2h-label">Unentschieden</div></div>
+        <div><div class="h2h-num">${l}</div><div class="h2h-label">Niederlagen</div></div>
+        <div><div class="h2h-num">${gf}:${ga}</div><div class="h2h-label">Tore</div></div>
+      </div>`;
+
+    const list = matches.map(ev => {
+      const date = new Date(ev.dateEvent).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" });
+      const score = (ev.intHomeScore != null && ev.intAwayScore != null)
+        ? `${esc(ev.intHomeScore)}:${esc(ev.intAwayScore)}` : "–:–";
+      return `<li>
+        <span>${esc(date)} · ${matchupHtml(ev.strHomeTeam, ev.strAwayTeam)}</span>
+        <span class="h2h-score">${score}</span>
+      </li>`;
+    }).join("");
+
+    bodyEl.innerHTML = summary + `<ul class="h2h-matches">${list}</ul>`;
+  }
+
+  function renderH2H(seasonRounds, tableRows){
+    const sectionEl = $("h2hSection");
+    const asideEl = $("h2hAside");
+    const selectEl = $("h2hSelect");
+
+    if (!tableRows || tableRows.length < 10){ sectionEl.hidden = true; return; }
+    const canonicalTeams = buildCanonicalTeams(tableRows);
+    const opponents = canonicalTeams.filter(t => !t.isFcz);
+    if (!opponents.length){ sectionEl.hidden = true; return; }
+
+    h2hData = { flat: seasonRounds.flatMap(r => r.events), canonicalTeams };
+    asideEl.textContent = `Saison ${seasonLabel()}`;
+
+    const prevValue = selectEl.value;
+    selectEl.innerHTML = opponents.map(o => `<option value="${esc(o.key)}">${esc(o.team)}</option>`).join("");
+    const keep = opponents.find(o => o.key === prevValue);
+    selectEl.value = keep ? keep.key : opponents[0].key;
+    selectEl.onchange = () => renderH2HResult(selectEl.value);
+
+    renderH2HResult(selectEl.value);
+    sectionEl.hidden = false;
+  }
+
+  // ---- Team-Vergleich ----
+  const COMPARE_MAX = 4;
+  let compareSelection = new Set();
+  let compareData = { tableRows: [], seasonRounds: [], canonicalTeams: [] };
+
+  function teamForm(seasonRounds, canonicalTeams, teamKey, want){
+    const flat = seasonRounds.flatMap(r => r.events);
+    const matches = flat.filter(ev => {
+      const h = matchCanonicalTeam(ev.strHomeTeam, canonicalTeams);
+      const a = matchCanonicalTeam(ev.strAwayTeam, canonicalTeams);
+      return (h && h.key === teamKey) || (a && a.key === teamKey);
+    }).sort((a, b) => new Date(a.dateEvent) - new Date(b.dateEvent));
+
+    return matches.slice(-want).map(ev => {
+      const h = matchCanonicalTeam(ev.strHomeTeam, canonicalTeams);
+      const isHome = h && h.key === teamKey;
+      const hs = parseInt(ev.intHomeScore, 10), as = parseInt(ev.intAwayScore, 10);
+      const gf = isHome ? hs : as, ga = isHome ? as : hs;
+      return gf > ga ? "w" : gf < ga ? "l" : "d";
+    });
+  }
+
+  function renderCompareTable(){
+    const wrapEl = $("compareWrap");
+    const { tableRows, seasonRounds, canonicalTeams } = compareData;
+    const selected = tableRows.filter(r => compareSelection.has(normalizeTeamKey(r.team)));
+    if (selected.length < 2){
+      wrapEl.innerHTML = `<p class="empty-state" style="padding:14px;">Mindestens zwei Teams auswählen.</p>`;
+      return;
+    }
+
+    const labels = { w: "S", d: "U", l: "N" };
+    const metricRows = [
+      { label: "Tabellenplatz", get: r => `${r.rank}.` },
+      { label: "Punkte", get: r => String(r.points) },
+      { label: "Spiele", get: r => String(r.played) },
+      { label: "Schnitt", get: r => r.played ? (r.points / r.played).toFixed(2) : "–" },
+      { label: "Tordifferenz", get: r => (r.gd > 0 ? "+" : "") + r.gd },
+      { label: "Tore", get: r => `${r.gf}:${r.ga}` },
+      { label: "Form", get: r => {
+          const key = normalizeTeamKey(r.team);
+          const form = teamForm(seasonRounds, canonicalTeams, key, 5);
+          return form.length
+            ? form.map(res => `<span class="form-badge ${res}" style="width:20px;height:20px;font-size:10px;">${esc(labels[res])}</span>`).join("")
+            : "–";
+        } }
+    ];
+
+    const head = `<tr><th class="team-name" scope="col">&nbsp;</th>${selected.map(r => `<th scope="col">${esc(r.team)}</th>`).join("")}</tr>`;
+    const body = metricRows.map(m => `
+      <tr>
+        <td class="team-name">${esc(m.label)}</td>
+        ${selected.map(r => `<td>${m.get(r)}</td>`).join("")}
+      </tr>`).join("");
+
+    wrapEl.innerHTML = `<table><thead>${head}</thead><tbody>${body}</tbody></table>`;
+  }
+
+  function renderComparePicker(){
+    const pickerEl = $("comparePicker");
+    const { tableRows } = compareData;
+    pickerEl.innerHTML = tableRows.map(r => {
+      const key = normalizeTeamKey(r.team);
+      const active = compareSelection.has(key);
+      const locked = r.isFcz;
+      return `<label class="compare-chip ${active ? "active" : ""} ${locked ? "locked" : ""}">
+        <input type="checkbox" data-key="${esc(key)}" ${active ? "checked" : ""} ${locked ? "disabled" : ""}>
+        ${esc(r.team)}
+      </label>`;
+    }).join("");
+
+    pickerEl.querySelectorAll("input[type=checkbox]").forEach(cb => {
+      cb.addEventListener("change", () => {
+        const key = cb.dataset.key;
+        if (cb.checked){
+          if (compareSelection.size >= COMPARE_MAX){ cb.checked = false; return; }
+          compareSelection.add(key);
+        } else {
+          compareSelection.delete(key);
+        }
+        renderComparePicker();
+        renderCompareTable();
+      });
+    });
+  }
+
+  function renderCompare(tableRows, seasonRounds){
+    const sectionEl = $("compareSection");
+    if (!tableRows || tableRows.length < 10){ sectionEl.hidden = true; return; }
+
+    const canonicalTeams = buildCanonicalTeams(tableRows);
+    compareData = { tableRows, seasonRounds, canonicalTeams };
+
+    if (!compareSelection.size){
+      const fcz = tableRows.find(r => r.isFcz);
+      if (fcz) compareSelection.add(normalizeTeamKey(fcz.team));
+      const other = tableRows.find(r => !r.isFcz);
+      if (other) compareSelection.add(normalizeTeamKey(other.team));
+    }
+
+    renderComparePicker();
+    renderCompareTable();
+    sectionEl.hidden = false;
+  }
+
   // ---- Ablauf ----
   async function loadAll(){
     const refreshBtn = $("refreshBtn");
@@ -1333,6 +2071,19 @@
         renderForm(recent);
       }
       loadLineup(recent.length ? recent : lastEvents);
+
+      // Spielplan und Saison-Auswertungen brauchen mehr Rundenanfragen als
+      // die vorherigen Schritte — daher erst jetzt, nachdem das Wichtigste
+      // bereits sichtbar ist.
+      renderSpielplan(await collectUpcomingFixtures(nextEvent));
+
+      const seasonRounds = await collectSeasonRounds(nextEvent);
+      const tableRows = table && table.rows;
+      renderPpgTrend(seasonRounds);
+      renderRankHistory(seasonRounds, tableRows);
+      renderHomeAwaySplit(seasonRounds, tableRows);
+      renderH2H(seasonRounds, tableRows);
+      renderCompare(tableRows, seasonRounds);
 
       // Zuletzt, weil die Rundensuche am meisten Anfragen kostet.
       renderDerby(await findNextDerby(nextEvent));
