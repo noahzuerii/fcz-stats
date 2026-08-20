@@ -316,12 +316,7 @@
     font-size: 28px;
     font-weight: 700;
     letter-spacing: -0.5px;
-    margin: 0;
-  }
-  .trend-sub{
-    color: var(--text-faint);
-    font-size: 12.5px;
-    margin: 2px 0 14px;
+    margin: 0 0 14px;
   }
   .trend-chart svg{ display: block; width: 100%; height: auto; }
 
@@ -558,19 +553,6 @@
   tr.fcz-row td.team-name{ font-weight: 700; }
   tr.fcz-row td.rank{ color: var(--text); }
 
-  /* ---------- Fusszeile ---------- */
-  footer{
-    position: relative;
-    z-index: 1;
-    color: var(--text-faint);
-    font-size: 12px;
-    line-height: 1.7;
-    padding: 20px 0 32px;
-    border-top: 1px solid var(--border);
-  }
-  footer a{ color: var(--text-muted); text-decoration: none; }
-  footer a:hover{ color: var(--accent); text-decoration: underline; }
-
   @media (max-width: 520px){
     .result-list li{ grid-template-columns: 46px 1fr auto; row-gap: 4px; }
     .res-outcome{ display: none; }
@@ -650,7 +632,6 @@
       </div>
       <div class="trend-wrap">
         <p class="trend-value" id="ppgValue">–</p>
-        <p class="trend-sub">Punkte pro Spiel, kumuliert über die Saison</p>
         <div class="trend-chart" id="ppgChart"></div>
       </div>
     </section>
@@ -669,10 +650,8 @@
       </div>
       <div class="trend-wrap">
         <p class="trend-value" id="rankValue">–</p>
-        <p class="trend-sub">Tabellenplatz nach jedem Spieltag</p>
         <div class="trend-chart" id="rankChart"></div>
       </div>
-      <p class="note">Vereinfachte Berechnung aus Punkten, Tordifferenz und erzielten Toren. Bei Punktgleichheit können die offiziellen Kopf-an-Kopf-Regeln der Liga abweichen.</p>
     </section>
 
     <section id="resultsSection">
@@ -749,13 +728,6 @@
 
   </main>
 
-  <footer>
-    <p>
-      Spielplan, Resultate und Aufstellungen: <a href="https://www.thesportsdb.com" target="_blank" rel="noopener">TheSportsDB</a> &middot;
-      Tabelle: <a href="https://de.wikipedia.org" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA)<br>
-      Inoffizielles Projekt ohne Verbindung zum FC Zürich. Alle Angaben ohne Gewähr.
-    </p>
-  </footer>
 </div>
 
 <script>
