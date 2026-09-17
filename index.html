@@ -1604,6 +1604,50 @@
     return null;
   }
 
+  // ---- Tabelle aus Saisonrunden berechnen (Fallback / Frische-Check) ----
+  // Ähnlich wie computeRankHistory, liefert aber eine fertige Tabelle im
+  // gleichen Format wie fetchTable(), sodass renderTable() sie direkt nutzen kann.
+  function computeTableFromRounds(seasonRounds, canonicalTeams){
+    if (!canonicalTeams || !canonicalTeams.length || !seasonRounds || !seasonRounds.length) return null;
+
+    const state = new Map(canonicalTeams.map(t => [t.key, {
+      team: t.team, isFcz: t.isFcz, key: t.key,
+      played: 0, win: 0, draw: 0, loss: 0, gf: 0, ga: 0, points: 0
+    }]));
+
+    seasonRounds.forEach(({ events }) => {
+      events.forEach(ev => {
+        const home = matchCanonicalTeam(ev.strHomeTeam, canonicalTeams);
+        const away = matchCanonicalTeam(ev.strAwayTeam, canonicalTeams);
+        if (!home || !away) return;
+        const hs = parseInt(ev.intHomeScore, 10), as = parseInt(ev.intAwayScore, 10);
+        if (Number.isNaN(hs) || Number.isNaN(as)) return;
+        const hSt = state.get(home.key), aSt = state.get(away.key);
+        if (!hSt || !aSt) return;
+        hSt.played++; aSt.played++;
+        hSt.gf += hs; hSt.ga += as; aSt.gf += as; aSt.ga += hs;
+        if (hs > as){ hSt.win++; hSt.points += 3; aSt.loss++; }
+        else if (hs < as){ aSt.win++; aSt.points += 3; hSt.loss++; }
+        else { hSt.draw++; aSt.draw++; hSt.points++; aSt.points++; }
+      });
+    });
+
+    const rows = [...state.values()]
+      .sort((a, b) => b.points - a.points || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf)
+      .map((s, i) => ({
+        rank: i + 1,
+        team: s.team,
+        played: s.played,
+        win: s.win, draw: s.draw, loss: s.loss,
+        gf: s.gf, ga: s.ga,
+        gd: s.gf - s.ga,
+        points: s.points,
+        isFcz: s.isFcz
+      }));
+
+    return { rows, source: "Berechnet" };
+  }
+
   function renderTable(result){
     const wrapEl = $("tableWrap");
     const asideEl = $("tableAside");
@@ -2032,7 +2076,7 @@
       renderResults(lastEvents);
       renderForm(lastEvents);
 
-      const table = await fetchTable();
+      let table = await fetchTable();
       renderTable(table);
       renderStats(table && table.rows);
 
@@ -2050,7 +2094,44 @@
       renderSpielplan(await collectUpcomingFixtures(nextEvent));
 
       const seasonRounds = await collectSeasonRounds(nextEvent);
-      const tableRows = table && table.rows;
+      let tableRows = table && table.rows;
+
+      // Frische-Check: Wenn die berechnete Tabelle aktueller ist als die
+      // Wikipedia-/TheSportsDB-Tabelle, verwende stattdessen die berechnete.
+      if (tableRows && tableRows.length && seasonRounds.length) {
+        const canonTeams = buildCanonicalTeams(tableRows);
+        const computed = computeTableFromRounds(seasonRounds, canonTeams);
+        if (computed && computed.rows.length) {
+          const maxPlayedWiki = Math.max(...tableRows.map(r => r.played));
+          const maxPlayedCalc = Math.max(...computed.rows.map(r => r.played));
+          if (maxPlayedCalc > maxPlayedWiki) {
+            table = computed;
+            tableRows = computed.rows;
+            renderTable(table);
+            renderStats(tableRows);
+          }
+        }
+      } else if ((!tableRows || !tableRows.length) && seasonRounds.length) {
+        // Kein Wikipedia/TheSportsDB verfügbar, aber Runden vorhanden:
+        // Tabelle komplett aus Runden berechnen.
+        // Dazu Team-Liste aus den Runden extrahieren.
+        const teamSet = new Map();
+        seasonRounds.forEach(({ events }) => events.forEach(ev => {
+          [ev.strHomeTeam, ev.strAwayTeam].forEach(name => {
+            const key = normalizeTeamKey(name);
+            if (!teamSet.has(key)) teamSet.set(key, { team: name, key, isFcz: isFczName(name) });
+          });
+        }));
+        const adHocTeams = [...teamSet.values()];
+        const computed = computeTableFromRounds(seasonRounds, adHocTeams);
+        if (computed && computed.rows.length) {
+          table = computed;
+          tableRows = computed.rows;
+          renderTable(table);
+          renderStats(tableRows);
+        }
+      }
+
       renderPpgTrend(seasonRounds);
       renderRankHistory(seasonRounds, tableRows);
       renderHomeAwaySplit(seasonRounds, tableRows);
