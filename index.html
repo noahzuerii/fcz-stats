@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FC Zürich — Super League Dashboard</title>
-<meta name="description" content="Dashboard für den FC Zürich: Spielplan, Zürcher Derby, Form- und Punktetrend, Tabelle mit Heim/Auswärts-Split, Head-to-Head, Team-Vergleich, Resultate und Aufstellung der Super League.">
+<meta name="description" content="Dashboard für den FC Zürich: Spielplan, Zürcher Derby, Form- und Punktetrend, Tabelle, Resultate und Aufstellung der Super League.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -320,28 +320,6 @@
   }
   .trend-chart svg{ display: block; width: 100%; height: auto; }
 
-  /* ---------- Heim/Auswärts-Split ---------- */
-  .split-grid{
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-  .split-col h3{
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.6px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin: 0 0 8px;
-  }
-  .split-col table{ font-size: 12.5px; }
-  .split-col th, .split-col td{ padding: 8px 6px; }
-
-
-  @media (max-width: 640px){
-    .split-grid{ grid-template-columns: 1fr; }
-  }
-
   /* ---------- Saison-Statistik ---------- */
   /* Eigene Rahmen statt 1px-Gap-Trick: eine unvollständige letzte Reihe
      hinterlässt so keine grauen Leerflächen. */
@@ -639,24 +617,6 @@
       <p class="note" id="tableNote" hidden></p>
     </section>
 
-    <section id="splitSection" hidden>
-      <div class="section-head">
-        <h2>Heim &amp; Auswärts</h2>
-        <span class="aside" id="splitAside"></span>
-      </div>
-      <div class="split-grid">
-        <div class="split-col">
-          <h3>Heimtabelle</h3>
-          <div class="table-wrap" id="splitHomeWrap"></div>
-        </div>
-        <div class="split-col">
-          <h3>Auswärtstabelle</h3>
-          <div class="table-wrap" id="splitAwayWrap"></div>
-        </div>
-      </div>
-    </section>
-
-
   </main>
 
 </div>
@@ -726,8 +686,8 @@
   // Wikipedia ("FC Lugano", "BSC Young Boys", "Servette FC", "Grasshopper
   // Club Zürich") und TheSportsDB ("Lugano", "Young Boys", "Servette",
   // "Grasshoppers") schreiben Vereinsnamen unterschiedlich. Für Features,
-  // die beide Quellen zusammenführen (Heim/Auswärts-Split, Tabellenverlauf,
-  // Head-to-Head, Team-Vergleich), normalisieren wir auf einen Kern-Namen.
+  // die beide Quellen zusammenführen (Tabellenverlauf), normalisieren wir
+  // auf einen Kern-Namen.
   function normalizeTeamKey(name){
     return String(name || "")
       .toLowerCase()
@@ -1208,9 +1168,8 @@
   // Liest alle bereits gespielten Runden der laufenden Saison — nicht nur
   // FCZ-Spiele, sondern alle Begegnungen. Nutzt denselben Rundencache wie
   // die Derby-Suche und die "letzten Spiele", ist also meist günstig.
-  // Daraus lassen sich ohne weitere Anfragen berechnen: Punkte-Trend,
-  // Heim/Auswärts-Split, Tabellenverlauf, Head-to-Head und Team-Vergleich
-  // (jeweils für diese Saison).
+  // Daraus lassen sich ohne weitere Anfragen berechnen: Punkte-Trend und
+  // Tabellenverlauf (jeweils für diese Saison).
   async function collectSeasonRounds(nextEvent){
     const season = currentSeason();
     const lastRound = Math.max(0, estimateRound(nextEvent) - 1);
@@ -1633,9 +1592,8 @@
   }
 
   // ---- Kanonische Team-Liste (aus der Wikipedia-Tabelle) ----
-  // Dient als gemeinsame Referenz für Tabellenverlauf, Heim/Auswärts-Split,
-  // Head-to-Head und Team-Vergleich, damit TheSportsDB-Ereignisse den
-  // richtigen Tabellen-Teams zugeordnet werden.
+  // Dient als gemeinsame Referenz für den Tabellenverlauf, damit
+  // TheSportsDB-Ereignisse den richtigen Tabellen-Teams zugeordnet werden.
   function buildCanonicalTeams(tableRows){
     return (tableRows || []).map(r => ({ team: r.team, key: normalizeTeamKey(r.team), isFcz: r.isFcz }));
   }
@@ -1707,81 +1665,6 @@
     </svg>`;
     sectionEl.hidden = false;
   }
-
-  // ---- Heim/Auswärts-Split ----
-  function computeHomeAwaySplit(seasonRounds, canonicalTeams){
-    const flat = seasonRounds.flatMap(r => r.events);
-    const mk = () => ({ played: 0, win: 0, draw: 0, loss: 0, gf: 0, ga: 0 });
-    const home = new Map(canonicalTeams.map(t => [t.key, mk()]));
-    const away = new Map(canonicalTeams.map(t => [t.key, mk()]));
-
-    flat.forEach(ev => {
-      const h = matchCanonicalTeam(ev.strHomeTeam, canonicalTeams);
-      const a = matchCanonicalTeam(ev.strAwayTeam, canonicalTeams);
-      if (!h || !a) return;
-      const hs = parseInt(ev.intHomeScore, 10), as = parseInt(ev.intAwayScore, 10);
-      if (Number.isNaN(hs) || Number.isNaN(as)) return;
-
-      const hSt = home.get(h.key);
-      hSt.played++; hSt.gf += hs; hSt.ga += as;
-      if (hs > as) hSt.win++; else if (hs < as) hSt.loss++; else hSt.draw++;
-
-      const aSt = away.get(a.key);
-      aSt.played++; aSt.gf += as; aSt.ga += hs;
-      if (as > hs) aSt.win++; else if (as < hs) aSt.loss++; else aSt.draw++;
-    });
-
-    const build = map => canonicalTeams
-      .map(t => {
-        const s = map.get(t.key);
-        return { team: t.team, isFcz: t.isFcz, ...s, gd: s.gf - s.ga, points: s.win * 3 + s.draw };
-      })
-      .filter(r => r.played > 0)
-      .sort((a, b) => b.points - a.points || b.gd - a.gd || b.gf - a.gf)
-      .map((r, i) => ({ ...r, rank: i + 1 }));
-
-    return { home: build(home), away: build(away) };
-  }
-
-  function miniTableHtml(rows){
-    if (!rows.length) return `<p class="empty-state" style="padding:14px;">Noch keine Spiele.</p>`;
-    const body = rows.map(r => `
-      <tr class="${r.isFcz ? "fcz-row" : ""}">
-        <td class="rank">${esc(r.rank)}</td>
-        <td class="team-name">${esc(r.team)}</td>
-        <td>${esc(r.played)}</td>
-        <td>${esc(r.gf)}:${esc(r.ga)}</td>
-        <td class="pts">${esc(r.points)}</td>
-      </tr>`).join("");
-    return `<table>
-      <thead><tr>
-        <th class="rank" scope="col">#</th>
-        <th class="team-name" scope="col">Verein</th>
-        <th scope="col" title="Spiele">Sp</th>
-        <th scope="col" title="Tore">Tore</th>
-        <th class="pts" scope="col" title="Punkte">Pkt</th>
-      </tr></thead>
-      <tbody>${body}</tbody>
-    </table>`;
-  }
-
-  function renderHomeAwaySplit(seasonRounds, tableRows){
-    const sectionEl = $("splitSection");
-    const asideEl = $("splitAside");
-    const homeWrap = $("splitHomeWrap");
-    const awayWrap = $("splitAwayWrap");
-
-    if (!tableRows || tableRows.length < 10){ sectionEl.hidden = true; return; }
-    const canonicalTeams = buildCanonicalTeams(tableRows);
-    const { home, away } = computeHomeAwaySplit(seasonRounds, canonicalTeams);
-    if (!home.length && !away.length){ sectionEl.hidden = true; return; }
-
-    asideEl.textContent = `Saison ${seasonLabel()}`;
-    homeWrap.innerHTML = miniTableHtml(home);
-    awayWrap.innerHTML = miniTableHtml(away);
-    sectionEl.hidden = false;
-  }
-
 
   // ---- Ablauf ----
   async function loadAll(){
@@ -1883,7 +1766,6 @@
 
       renderPpgTrend(seasonRounds);
       renderRankHistory(seasonRounds, tableRows);
-      renderHomeAwaySplit(seasonRounds, tableRows);
 
       // Zuletzt, weil die Rundensuche am meisten Anfragen kostet.
       renderDerby(await findNextDerby(nextEvent));
