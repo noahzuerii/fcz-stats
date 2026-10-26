@@ -6,7 +6,7 @@
 
 [![Live](https://img.shields.io/badge/Live-noahzuerii.github.io%2Ffcz--stats-6cace4?style=for-the-badge)](https://noahzuerii.github.io/fcz-stats/)
 [![Deploy](https://github.com/noahzuerii/fcz-stats/actions/workflows/deploy.yml/badge.svg)](https://github.com/noahzuerii/fcz-stats/actions/workflows/deploy.yml)
-[![No build step](https://img.shields.io/badge/build-static%20single--file-5fae6b?style=flat-square)](#-deployment)
+[![No build step](https://img.shields.io/badge/build-static%2C%20no%20build-5fae6b?style=flat-square)](#-deployment)
 
 ### → **[noahzuerii.github.io/fcz-stats](https://noahzuerii.github.io/fcz-stats/)** ←
 
@@ -30,20 +30,21 @@
 | 🧩 **Aufstellung** | Formation + Spieler des letzten Spiels nach Mannschaftsteilen (sofern API-Daten vorhanden) |
 | 📋 **Resultate** | Liste der jüngsten Spiele mit Endstand |
 | 🏆 **Tabelle** | Aktuelle Super-League-Tabelle, FCZ-Zeile hervorgehoben |
-| 🏠✈️ **Heim/Auswärts-Split** | Eigene Heim- und Auswärtstabelle, berechnet aus den Saison-Ergebnissen |
-| 🤝 **Head-to-Head** | Bilanz gegen einen frei wählbaren Gegner (Saison-Begegnungen) |
-| ⚖️ **Team-Vergleich** | Bis zu vier Teams nebeneinander vergleichen (Punkte, Schnitt, Form, Tore) |
+| 🏆 **Schweizer Cup** | FCZ-Cup-Spiele dieser Saison (Resultate & nächste Partie), neben der Liga |
 | 🛡️ **Wappen** | FCZ-Badge wird live aus der API geladen |
+| 🔄 **Auto-Refresh** | Lädt die Daten automatisch alle 5 Minuten neu, pausiert im Hintergrund-Tab |
+| 📲 **PWA** | Installierbar als App (Manifest + Service Worker), App-Shell funktioniert offline |
 
-Alles in **einer einzigen `index.html`** — kein Backend, kein Build, kein Framework.
+Statische Seite ohne Backend, ohne Build, ohne Framework — `index.html` plus ein kleines Manifest/Service-Worker-Duo für die Installierbarkeit.
 
 ## 🛠️ Tech
 
-- **Vanilla HTML/CSS/JS** in einer Datei, kein Build, kein Framework
+- **Vanilla HTML/CSS/JS**, kein Build, kein Framework
 - Zwei kostenlose APIs, beide direkt im Browser (kein Backend, kein Key-Geheimnis):
   - **Tabelle:** [Wikipedia](https://de.wikipedia.org) (de) — komplette **und korrekte** 12er-Tabelle, ohne Key, CORS-fähig via `origin=*`
-  - **Nächstes Spiel / Resultate:** [TheSportsDB](https://www.thesportsdb.com) (öffentlicher Test-Key `123`)
-- Fonts: Big Shoulders Display · Inter · Space Mono (Google Fonts)
+  - **Nächstes Spiel / Resultate / Schweizer Cup:** [TheSportsDB](https://www.thesportsdb.com) (öffentlicher Test-Key `123`)
+- **PWA:** [`manifest.json`](manifest.json) + [`sw.js`](sw.js) (Service Worker) + [`icon.svg`](icon.svg) machen die Seite installierbar
+- Font: Inter (Google Fonts)
 - Respektiert `prefers-reduced-motion`; robuste Empty-States statt Crashes
 
 ## ⚙️ Wie es funktioniert
@@ -52,15 +53,19 @@ Alles in **einer einzigen `index.html`** — kein Backend, kein Build, kein Fram
 2. Mit der Team-ID: `eventsnext.php` (nächstes Spiel) und `eventslast.php` (letzte Spiele) von TheSportsDB.
 3. Die **Tabelle** kommt aus dem Wikipedia-Artikel „Super League JJJJ/JJ (Schweiz)" (`action=parse`, `origin=*` für CORS). Das Script parst die `{{Fußballtabelle/Zeile|…}}`-Vorlagen und nimmt die finale/aktuelle 12er-Gesamttabelle. Saison-Jahr wird automatisch aus dem Datum berechnet. Schlägt das fehl, gibt's einen Fallback auf die (gedeckelte) TheSportsDB-Tabelle.
 4. Der Countdown läuft client-seitig per `setInterval` auf Basis des Match-Timestamps.
+5. Der **Schweizer Cup** kommt über einen einzelnen `eventsseason.php`-Request (Liga-ID `5489`) für die ganze Saison auf einmal; gefiltert wird über die Team-ID statt über den Namen, da ein Namensabgleich auch gleichnamige Amateurvereine wie „Zürich City" träfe.
+6. Ein `setInterval` lädt alle 5 Minuten automatisch neu (**Auto-Refresh**), pausiert dabei aber im Hintergrund-Tab und überspringt den Lauf, solange ein vorheriger Refresh noch läuft.
+7. [`manifest.json`](manifest.json) + [`sw.js`](sw.js) machen die Seite als **PWA installierbar**. Der Service Worker cacht nur die eigene App-Shell (`index.html`, Manifest, Icon) als Offline-Fallback — Netzwerk-zuerst, damit nie eine veraltete Version aus dem Cache kommt. API-Aufrufe an Wikipedia/TheSportsDB laufen unverändert direkt übers Netz, der Service Worker fängt sie nicht ab.
 
 ### ⚠️ Datenquellen-Hinweise
 
 - **Tabelle:** vollständig (alle 12 Teams) **und korrekt** dank Wikipedia. Wikipedia-Inhalte stehen unter CC BY-SA; während einer laufenden Saison kann die Tabelle minimal verzögert aktualisiert werden (Editoren pflegen i.d.R. innerhalb von Stunden nach).
 - **Resultate:** Der TheSportsDB-Test-Key `123` deckelt vergangene Spiele auf wenige Datensätze (oft nur 1–2). Mehr gäbe es mit einem TheSportsDB-**Premium-Key** — dann nur `API_KEY` in [`index.html`](index.html) ersetzen.
 - **Nächstes Derby:** wird aus den nächsten angesetzten Spielen erkannt (Gegner = GC). Liegt das Derby weiter in der Zukunft, erscheint es, sobald es in den kommenden Spielen auftaucht.
+- **Schweizer Cup:** genau wie die Liga-Resultate vom crowd-sourced Testkey abhängig — einzelne Runden oder Partien können fehlen. Die Sektion bleibt ausgeblendet, wenn für die laufende Saison keine FCZ-Cup-Partie gefunden wird.
 - **Aufstellung:** kommt aus `lookupevent.php` und wird nur angezeigt, wenn TheSportsDB für das Spiel Lineup-Daten hat — für die Super League ist das je nach Spiel lückenhaft.
 - **Highlights:** nutzt das hinterlegte Video, falls vorhanden; sonst öffnet der Link eine YouTube-Suche „Heim Gast Highlights".
-- **Spielplan, Punkte-Trend, Tabellenverlauf, Heim/Auswärts-Split, Head-to-Head, Team-Vergleich:** werden client-seitig aus den rundenweise abgerufenen Saison-Ergebnissen (`eventsround.php`) berechnet — derselbe Mechanismus, der schon die Derby-Suche speist. Der Tabellenverlauf nutzt dabei ein vereinfachtes Tie-Break (Punkte, Tordifferenz, Tore); die offizielle Liga kann bei Punktgleichheit abweichende Kopf-an-Kopf-Regeln anwenden. Head-to-Head und Team-Vergleich beziehen sich nur auf die laufende Saison, da der Testkey keinen zuverlässigen Zugriff auf vergangene Saisons bietet (`eventsvs.php` ist mit dem öffentlichen Testkey nicht erreichbar).
+- **Spielplan, Punkte-Trend, Tabellenverlauf:** werden client-seitig aus den rundenweise abgerufenen Saison-Ergebnissen (`eventsround.php`) berechnet — derselbe Mechanismus, der schon die Derby-Suche speist. Der Tabellenverlauf nutzt dabei ein vereinfachtes Tie-Break (Punkte, Tordifferenz, Tore); die offizielle Liga kann bei Punktgleichheit abweichende Kopf-an-Kopf-Regeln anwenden.
 
 ## 🚀 Deployment
 
@@ -83,12 +88,8 @@ Bei jedem Push auf `main` lädt der Workflow ([`deploy.yml`](.github/workflows/d
 
 ## 🧭 Mögliche nächste Schritte
 
-- **PWA** — Manifest + Service Worker zum „Installieren"
-- **Cup-Spiele** — Schweizer Cup neben der Liga
-- **Auto-Refresh** — alle paar Minuten automatisch neu laden
 - **Topscorer** — Torschützenliste; mit dem Testkey sind Torschützen-Felder für die Super League zu lückenhaft für eine zuverlässige Liste (zuverlässig erst mit TheSportsDB-Premium-Key, alternativ Best-effort aus vorhandenen Lineup-Daten mit explizitem Unvollständigkeits-Hinweis)
 - **Volle Aufstellungs-Historie** — Lineups aller Spiele (Premium-Key erweitert die Datenlage)
-- **Mehrsaisonales Head-to-Head** — Bilanz über mehrere Saisons; bräuchte einen vollständigen Rundenscan vergangener Saisons (`eventsvs.php` ist mit dem Testkey nicht erreichbar)
 
 ## 📄 Lizenz / Daten
 

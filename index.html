@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FC Zürich — Super League Dashboard</title>
 <meta name="description" content="Dashboard für den FC Zürich: Spielplan, Zürcher Derby, Form- und Punktetrend, Tabelle, Resultate und Aufstellung der Super League.">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2f6fb8">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -593,6 +597,14 @@
       </ul>
     </section>
 
+    <section id="cupSection" hidden>
+      <div class="section-head">
+        <h2>Schweizer Cup</h2>
+        <span class="aside" id="cupAside"></span>
+      </div>
+      <ul class="result-list" id="cupList"></ul>
+    </section>
+
     <section id="lineupSection" hidden>
       <div class="section-head">
         <h2>Aufstellung</h2>
@@ -630,6 +642,7 @@
   const BASE = `https://www.thesportsdb.com/api/v1/json/${API_KEY}`;
   const TEAM_NAME_CANDIDATES = ["FC Zurich", "FC Zürich", "Zurich"];
   const SUPER_LEAGUE_ID = "4675";
+  const CUP_LEAGUE_ID = "5489"; // Schweizer Cup
   const WIKI_API = "https://de.wikipedia.org/w/api.php";
 
   // Zürcher Derby = FCZ gegen Grasshopper Club Zürich
@@ -1077,6 +1090,64 @@
         <span class="res-date">${esc(date)}</span>
         <span class="res-teams">${matchupHtml(ev.strHomeTeam, ev.strAwayTeam)}</span>
         <span class="tag ${fczHome ? "home" : ""}">${fczHome ? "Heim" : "Auswärts"}</span>
+      </li>`;
+    }).join("");
+    sectionEl.hidden = false;
+  }
+
+  // ---- Schweizer Cup ----
+  // Eigener Wettbewerb neben der Liga. Ein einzelner eventsseason.php-Request
+  // liefert die ganze Saison auf einmal (kein rundenweiser Scan nötig, da
+  // Cup-Runden nicht fortlaufend wie Liga-Spieltage nummeriert sind). Gefiltert
+  // wird über die Team-ID statt über den Namen: Namensabgleich ("zürich")
+  // träfe auch gleichnamige Amateurvereine wie "Zürich City".
+  async function fetchCupEvents(){
+    const season = currentSeason();
+    const key = `fcz:cup:${season}`;
+    let events = cacheGet(key, 6 * 3600 * 1000);
+    if (!events){
+      try{
+        const data = await fetchJson(`${BASE}/eventsseason.php?id=${CUP_LEAGUE_ID}&s=${season}`);
+        events = (data && data.events) || [];
+        cacheSet(key, events);
+      } catch(e){
+        events = [];
+      }
+    }
+    return events
+      .filter(ev => String(ev.idHomeTeam) === String(fczTeamId) || String(ev.idAwayTeam) === String(fczTeamId))
+      .sort((a, b) => kickoffDate(a) - kickoffDate(b));
+  }
+
+  function renderCup(events){
+    const sectionEl = $("cupSection");
+    const listEl = $("cupList");
+    if (!events || !events.length){ sectionEl.hidden = true; return; }
+
+    const labels = { w: "S", d: "U", l: "N" };
+    listEl.innerHTML = events.map(ev => {
+      const when = kickoffDate(ev);
+      const date = when ? when.toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit" }) : "–";
+      const fczHome = String(ev.idHomeTeam) === String(fczTeamId);
+
+      if (!hasScore(ev)){
+        return `<li>
+          <span class="res-date">${esc(date)}</span>
+          <span class="res-teams">${matchupHtml(ev.strHomeTeam, ev.strAwayTeam)}</span>
+          <span class="tag ${fczHome ? "home" : ""}">${fczHome ? "Heim" : "Auswärts"}</span>
+        </li>`;
+      }
+
+      const gf = parseInt(fczHome ? ev.intHomeScore : ev.intAwayScore, 10);
+      const ga = parseInt(fczHome ? ev.intAwayScore : ev.intHomeScore, 10);
+      const res = gf > ga ? "w" : gf < ga ? "l" : "d";
+      return `<li>
+        <span class="res-date">${esc(date)}</span>
+        <span class="res-teams">${matchupHtml(ev.strHomeTeam, ev.strAwayTeam)}<br>
+          <a class="res-yt" href="${esc(highlightUrl(ev))}" target="_blank" rel="noopener">Highlights ansehen</a>
+        </span>
+        <span class="res-score">${esc(ev.intHomeScore)}:${esc(ev.intAwayScore)}</span>
+        <span class="res-outcome ${res}" title="${labels[res]}">${labels[res]}</span>
       </li>`;
     }).join("");
     sectionEl.hidden = false;
@@ -1724,6 +1795,7 @@
       // die vorherigen Schritte — daher erst jetzt, nachdem das Wichtigste
       // bereits sichtbar ist.
       renderSpielplan(await collectUpcomingFixtures(nextEvent));
+      renderCup(await fetchCupEvents());
 
       const seasonRounds = await collectSeasonRounds(nextEvent);
       let tableRows = table && table.rows;
@@ -1782,9 +1854,28 @@
     }
   }
 
+  // ---- Auto-Refresh ----
+  // Lädt die Daten alle paar Minuten automatisch neu, ohne dass manuell
+  // aktualisiert werden muss. Pausiert im Hintergrund-Tab und überspringt
+  // den Lauf, solange ein vorheriger Refresh noch läuft — schont so den
+  // öffentlichen Testkey.
+  const AUTO_REFRESH_MS = 5 * 60 * 1000;
+  setInterval(() => {
+    if (document.visibilityState === "visible" && !$("refreshBtn").disabled) loadAll();
+  }, AUTO_REFRESH_MS);
+
   $("refreshBtn").addEventListener("click", loadAll);
   loadAll();
 })();
+</script>
+
+<script>
+  // ---- PWA: Service Worker registrieren ----
+  if ("serviceWorker" in navigator){
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    });
+  }
 </script>
 </body>
 </html>
